@@ -1,0 +1,346 @@
+<library xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:a="urn:hl7-org:cql-annotations:r1" xmlns="urn:hl7-org:elm:r1" xmlns:fhir="http://hl7.org/fhir" xmlns:t="urn:hl7-org:elm-types:r1" localId="0">
+  <annotation xsi:type="a:CqlToElmInfo" translatorVersion="4.0.0-SNAPSHOT" translatorOptions="EnableAnnotations,EnableLocators,DisableListDemotion,DisableListPromotion" signatureLevel="Overloads" />
+  <annotation xsi:type="a:Annotation">
+    <a:s r="270">
+      <a:s>
+        // A simple &quot;Hello, World&quot; CQL library to verify the CQL engine is working.
+// Be sure to select one or more Patient resources as context before running this library.
+// 
+// Author: Preston Lee
+
+library HelloWorld version &apos;1.0.0&apos;
+      </a:s>
+    </a:s>
+  </annotation>
+  <identifier id="HelloWorld" version="1.0.0" />
+  <schemaIdentifier id="urn:hl7-org:elm" version="r1" />
+  <usings>
+    <def localId="1" localIdentifier="System" uri="urn:hl7-org:elm-types:r1" />
+    <def localId="206" locator="8:1-8:26" localIdentifier="FHIR" uri="http://hl7.org/fhir" version="4.0.1">
+      <annotation xsi:type="a:Annotation">
+        <a:s r="206">
+          <a:s>
+            using
+          </a:s>
+          <a:s>
+            <a:s>
+              FHIR
+            </a:s>
+          </a:s>
+          <a:s>
+            version &apos;4.0.1&apos;
+          </a:s>
+        </a:s>
+      </annotation>
+    </def>
+  </usings>
+  <includes>
+    <def localId="208" locator="10:1-10:35" localIdentifier="FHIRHelpers" path="FHIRHelpers" version="4.0.1">
+      <annotation xsi:type="a:Annotation">
+        <a:s r="208">
+          <a:s>
+            include
+          </a:s>
+          <a:s>
+            <a:s>
+              FHIRHelpers
+            </a:s>
+          </a:s>
+          <a:s>
+            version &apos;4.0.1&apos;
+          </a:s>
+        </a:s>
+      </annotation>
+    </def>
+  </includes>
+  <contexts>
+    <def localId="213" locator="12:1-12:15" name="Patient" />
+  </contexts>
+  <statements>
+    <def localId="211" locator="12:1-12:15" name="Patient" context="Patient">
+      <expression xsi:type="SingletonFrom" localId="212">
+        <operand xsi:type="Retrieve" localId="210" locator="12:1-12:15" dataType="fhir:Patient" templateId="http://hl7.org/fhir/StructureDefinition/Patient" />
+      </expression>
+    </def>
+    <def localId="216" locator="14:1-15:60" name="HelloWorld" context="Patient" accessLevel="Public">
+      <annotation xsi:type="a:Annotation">
+        <a:s r="216">
+          <a:s>
+            define HelloWorld :
+          </a:s>
+          <a:s r="217">
+            <a:s>
+              &apos;If you\&apos;re seeing this text, the CQL library is working!&apos;
+            </a:s>
+          </a:s>
+        </a:s>
+      </annotation>
+      <expression xsi:type="Literal" localId="217" locator="15:3-15:60" valueType="t:String" value="If you&apos;re seeing this text, the CQL library is working!" />
+    </def>
+    <def localId="221" locator="17:1-18:68" name="PatientName" context="Patient" accessLevel="Public">
+      <annotation xsi:type="a:Annotation">
+        <a:s r="221">
+          <a:s>
+            define PatientName :
+          </a:s>
+          <a:s r="258">
+            <a:s r="243">
+              <a:s r="234">
+                <a:s>
+                  First(
+                </a:s>
+                <a:s r="229">
+                  <a:s r="228">
+                    <a:s>
+                      First(
+                    </a:s>
+                    <a:s r="225">
+                      <a:s r="224">
+                        <a:s>
+                          Patient
+                        </a:s>
+                      </a:s>
+                      <a:s>
+                        .
+                      </a:s>
+                      <a:s r="225">
+                        <a:s>
+                          name
+                        </a:s>
+                      </a:s>
+                    </a:s>
+                    <a:s>
+                      )
+                    </a:s>
+                  </a:s>
+                  <a:s>
+                    .
+                  </a:s>
+                  <a:s r="229">
+                    <a:s>
+                      given
+                    </a:s>
+                  </a:s>
+                </a:s>
+                <a:s>
+                  )
+                </a:s>
+              </a:s>
+              <a:s>
+                +
+              </a:s>
+              <a:s r="237">
+                <a:s>
+                  &apos; &apos;
+                </a:s>
+              </a:s>
+            </a:s>
+            <a:s>
+              +
+            </a:s>
+            <a:s r="253">
+              <a:s r="250">
+                <a:s>
+                  First(
+                </a:s>
+                <a:s r="245">
+                  <a:s r="244">
+                    <a:s>
+                      Patient
+                    </a:s>
+                  </a:s>
+                  <a:s>
+                    .
+                  </a:s>
+                  <a:s r="245">
+                    <a:s>
+                      name
+                    </a:s>
+                  </a:s>
+                </a:s>
+                <a:s>
+                  )
+                </a:s>
+              </a:s>
+              <a:s>
+                .
+              </a:s>
+              <a:s r="253">
+                <a:s>
+                  family
+                </a:s>
+              </a:s>
+            </a:s>
+          </a:s>
+        </a:s>
+      </annotation>
+      <expression xsi:type="Concatenate" localId="258" locator="18:3-18:68">
+        <operand xsi:type="Concatenate" localId="243" locator="18:3-18:39">
+          <operand xsi:type="FunctionRef" localId="239" name="ToString" libraryName="FHIRHelpers">
+            <signature xsi:type="NamedTypeSpecifier" localId="240" name="fhir:string" />
+            <operand xsi:type="First" localId="234" locator="18:3-18:34">
+              <signature xsi:type="ListTypeSpecifier" localId="235">
+                <elementType xsi:type="NamedTypeSpecifier" localId="236" name="fhir:string" />
+              </signature>
+              <source xsi:type="Property" localId="229" locator="18:9-18:33" path="given">
+                <source xsi:type="First" localId="228" locator="18:9-18:27">
+                  <source xsi:type="Property" localId="225" locator="18:15-18:26" path="name">
+                    <source xsi:type="ExpressionRef" localId="224" locator="18:15-18:21" name="Patient" />
+                  </source>
+                </source>
+              </source>
+            </operand>
+          </operand>
+          <operand xsi:type="Literal" localId="237" locator="18:37-18:39" valueType="t:String" value=" " />
+        </operand>
+        <operand xsi:type="FunctionRef" localId="254" name="ToString" libraryName="FHIRHelpers">
+          <signature xsi:type="NamedTypeSpecifier" localId="255" name="fhir:string" />
+          <operand xsi:type="Property" localId="253" locator="18:43-18:68" path="family">
+            <source xsi:type="First" localId="250" locator="18:43-18:61">
+              <signature xsi:type="ListTypeSpecifier" localId="251">
+                <elementType xsi:type="NamedTypeSpecifier" localId="252" name="fhir:HumanName" />
+              </signature>
+              <source xsi:type="Property" localId="245" locator="18:49-18:60" path="name">
+                <source xsi:type="ExpressionRef" localId="244" locator="18:49-18:55" name="Patient" />
+              </source>
+            </source>
+          </operand>
+        </operand>
+      </expression>
+    </def>
+    <def localId="261" locator="20:1-21:14" name="PatientAge" context="Patient" accessLevel="Public">
+      <annotation xsi:type="a:Annotation">
+        <a:s r="261">
+          <a:s>
+            define PatientAge :
+          </a:s>
+          <a:s r="266">
+            <a:s>
+              AgeInYears()
+            </a:s>
+          </a:s>
+        </a:s>
+      </annotation>
+      <expression xsi:type="CalculateAge" localId="266" locator="21:3-21:14" precision="Year">
+        <signature xsi:type="NamedTypeSpecifier" localId="267" name="t:Date" />
+        <operand xsi:type="Property" localId="265" path="birthDate.value">
+          <source xsi:type="ExpressionRef" localId="264" name="Patient" />
+        </operand>
+      </expression>
+    </def>
+    <def localId="270" locator="23:1-24:93" name="ActiveConditions" context="Patient" accessLevel="Public">
+      <annotation xsi:type="a:Annotation">
+        <a:s r="270">
+          <a:s>
+            define ActiveConditions :
+          </a:s>
+          <a:s r="290">
+            <a:s>
+              <a:s r="271">
+                <a:s r="272">
+                  <a:s r="272">
+                    <a:s>
+                      [Condition]
+                    </a:s>
+                  </a:s>
+                </a:s>
+                <a:s>
+                  C
+                </a:s>
+              </a:s>
+            </a:s>
+            <a:s />
+            <a:s r="274">
+              <a:s>
+                where
+              </a:s>
+              <a:s r="274">
+                <a:s>
+                  exists
+                </a:s>
+                <a:s r="289">
+                  <a:s>
+                    (
+                  </a:s>
+                  <a:s r="289">
+                    <a:s>
+                      <a:s r="275">
+                        <a:s r="278">
+                          <a:s>
+                            <a:s>
+                              C.clinicalStatus.coding
+                            </a:s>
+                          </a:s>
+                        </a:s>
+                        <a:s>
+                          CSCoding
+                        </a:s>
+                      </a:s>
+                    </a:s>
+                    <a:s />
+                    <a:s r="280">
+                      <a:s>
+                        where
+                      </a:s>
+                      <a:s r="280">
+                        <a:s r="282">
+                          <a:s r="281">
+                            <a:s>
+                              CSCoding
+                            </a:s>
+                          </a:s>
+                          <a:s>
+                            .
+                          </a:s>
+                          <a:s r="282">
+                            <a:s>
+                              code
+                            </a:s>
+                          </a:s>
+                        </a:s>
+                        <a:s>
+                          ~
+                        </a:s>
+                        <a:s r="283">
+                          <a:s>
+                            &apos;active&apos;
+                          </a:s>
+                        </a:s>
+                      </a:s>
+                    </a:s>
+                  </a:s>
+                  <a:s>
+                    )
+                  </a:s>
+                </a:s>
+              </a:s>
+            </a:s>
+          </a:s>
+        </a:s>
+      </annotation>
+      <expression xsi:type="Query" localId="290" locator="24:3-24:93">
+        <source localId="271" locator="24:3-24:15" alias="C">
+          <expression xsi:type="Retrieve" localId="272" locator="24:3-24:13" dataType="fhir:Condition" templateId="http://hl7.org/fhir/StructureDefinition/Condition" />
+        </source>
+        <where xsi:type="Exists" localId="274" locator="24:17-24:93">
+          <operand xsi:type="Query" localId="289" locator="24:29-24:93">
+            <source localId="275" locator="24:30-24:61" alias="CSCoding">
+              <expression xsi:type="Property" localId="278" locator="24:30-24:52" path="coding">
+                <source xsi:type="Property" localId="277" path="clinicalStatus" scope="C" />
+              </expression>
+            </source>
+            <where xsi:type="Equivalent" localId="280" locator="24:63-24:92">
+              <signature xsi:type="NamedTypeSpecifier" localId="287" name="t:String" />
+              <signature xsi:type="NamedTypeSpecifier" localId="288" name="t:String" />
+              <operand xsi:type="FunctionRef" localId="285" name="ToString" libraryName="FHIRHelpers">
+                <signature xsi:type="NamedTypeSpecifier" localId="286" name="fhir:string" />
+                <operand xsi:type="Property" localId="282" locator="24:69-24:81" path="code" scope="CSCoding" />
+              </operand>
+              <operand xsi:type="Literal" localId="283" locator="24:85-24:92" valueType="t:String" value="active" />
+            </where>
+          </operand>
+        </where>
+      </expression>
+    </def>
+  </statements>
+</library>
