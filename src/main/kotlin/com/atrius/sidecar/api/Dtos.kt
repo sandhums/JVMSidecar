@@ -10,6 +10,27 @@ import kotlinx.serialization.json.JsonNames
 @Serializable
 data class HealthResponse(val status: String)
 
+/** Cumulative process metrics (`GET /metrics`). */
+@Serializable
+data class SidecarMetricsSnapshot(
+    val evaluateTotal: Long,
+    val evaluateErrors: Long,
+    val evaluateAvgDurationMs: Double,
+    val applyTotal: Long,
+    val applyAvgDurationMs: Double,
+    val libraryStackCacheHits: Long,
+    val libraryStackCacheMisses: Long,
+    val krLibraryFetches: Long,
+)
+
+@Serializable
+data class ClearLibraryCacheResponse(
+    val cleared: List<String>,
+    val evaluationStacksRemoved: Int,
+    val fhirLibraryResourcesRemoved: Int,
+    val terminologyExpansionBucketsRemoved: Int,
+)
+
 /** JSON error body for failed requests (evaluate + generic handlers). FHIR fields set when upstream FHIR contributed to the failure. */
 @Serializable
 data class ErrorResponse(
@@ -100,6 +121,24 @@ data class EvaluateExpressionRequest(
     val patientId: String? = null,
     val parameters: Map<String, JsonElement>? = null,
     val evaluationDateTime: String? = null,
+    /** CDS Hooks prefetch map (key → FHIR resource or searchset Bundle JSON). */
+    val prefetch: Map<String, JsonElement>? = null,
+    /**
+     * SMART bearer credentials for clinical FHIR ([hfsBaseUrl] only). Forwarded from CDS Hooks
+     * `fhirAuthorization` by cds-server. Omitted for server-trust paths (e.g. cr-fhir-bridge).
+     */
+    val fhirAuthorization: FhirAuthorizationCredentials? = null,
+)
+
+/** OAuth 2.0 bearer token metadata from CDS Hooks `fhirAuthorization`. */
+@Serializable
+data class FhirAuthorizationCredentials(
+    val accessToken: String,
+    val tokenType: String = "Bearer",
+    val expiresIn: Long? = null,
+    val scope: String? = null,
+    val subject: String? = null,
+    val patient: String? = null,
 )
 
 @Serializable
@@ -130,6 +169,8 @@ data class ApplyPlanDefinitionRequest(
     /** CDS Hooks prefetch map (key → FHIR resource JSON). */
     val prefetch: Map<String, JsonElement>? = null,
     val parameters: Map<String, JsonElement>? = null,
+    /** SMART bearer credentials for clinical FHIR ([hfsBaseUrl] only). */
+    val fhirAuthorization: FhirAuthorizationCredentials? = null,
 )
 
 @Serializable

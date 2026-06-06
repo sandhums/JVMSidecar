@@ -426,11 +426,17 @@ class SidecarEvaluatorTest {
 
     @Test
     fun evaluatesAtriusCms165PatientFromKrWhenStackRunning() {
-        val kr = System.getenv("KR_BASE_URL") ?: "http://127.0.0.1:8079"
+        val kr = resolveKrBaseUrlForTests()
         val bridge = resolveHfsBridgeUrlForTests()
-        assumeFhirMetadataReachable(bridge, "HFS bridge")
-        val hts = System.getenv("HTS_BASE_URL") ?: "http://127.0.0.1:9091"
-        val patient = System.getenv("TEST_PATIENT_ID") ?: "cms165-demo"
+        val hts = resolveHtsBaseUrlForTests()
+        val patient = resolveDemoPatientIdForTests()
+        assumeCms165EvaluationStackReady(
+            libraryId = "AtriusCMS165ControllingHighBP",
+            bridge = bridge,
+            kr = kr,
+            hts = hts,
+            patientId = patient,
+        )
         val response =
             SidecarEvaluator().evaluate(
                 EvaluateExpressionRequest(
@@ -452,11 +458,17 @@ class SidecarEvaluatorTest {
 
     @Test
     fun evaluatesCms165PatientFromKrWhenStackRunning() {
-        val kr = System.getenv("KR_BASE_URL") ?: "http://127.0.0.1:8079"
+        val kr = resolveKrBaseUrlForTests()
         val bridge = resolveHfsBridgeUrlForTests()
-        assumeFhirMetadataReachable(bridge, "HFS bridge")
-        val hts = System.getenv("HTS_BASE_URL") ?: "http://127.0.0.1:9091"
-        val patient = System.getenv("TEST_PATIENT_ID") ?: "03d2e5e6-a126-d0de-0a38-3f0bad766b30"
+        val hts = resolveHtsBaseUrlForTests()
+        val patient = resolveDemoPatientIdForTests()
+        assumeCms165EvaluationStackReady(
+            libraryId = "CMS165FHIRControllingHighBloodPressure",
+            bridge = bridge,
+            kr = kr,
+            hts = hts,
+            patientId = patient,
+        )
         val response =
             SidecarEvaluator().evaluate(
                 EvaluateExpressionRequest(
@@ -478,11 +490,17 @@ class SidecarEvaluatorTest {
 
     @Test
     fun evaluatesCms165InitialPopulationFromKrWhenStackRunning() {
-        val kr = System.getenv("KR_BASE_URL") ?: "http://127.0.0.1:8079"
+        val kr = resolveKrBaseUrlForTests()
         val bridge = resolveHfsBridgeUrlForTests()
-        assumeFhirMetadataReachable(bridge, "HFS bridge")
-        val hts = System.getenv("HTS_BASE_URL") ?: "http://127.0.0.1:9091"
-        val patient = System.getenv("TEST_PATIENT_ID") ?: "03d2e5e6-a126-d0de-0a38-3f0bad766b30"
+        val hts = resolveHtsBaseUrlForTests()
+        val patient = resolveDemoPatientIdForTests()
+        assumeCms165EvaluationStackReady(
+            libraryId = "CMS165FHIRControllingHighBloodPressure",
+            bridge = bridge,
+            kr = kr,
+            hts = hts,
+            patientId = patient,
+        )
         val response =
             SidecarEvaluator().evaluate(
                 EvaluateExpressionRequest(

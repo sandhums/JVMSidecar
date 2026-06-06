@@ -27,6 +27,13 @@ internal object EvaluationLibraryCache {
         stacks[key] = stack
     }
 
+    /** Drop all compiled ELM stacks (after KR library re-import or version bump). */
+    fun clear(): Int {
+        val n = stacks.size
+        stacks.clear()
+        return n
+    }
+
     fun cacheKey(
         libraryBase: String,
         libraryId: String,
@@ -46,4 +53,15 @@ internal object FhirLibraryResourceCaches {
 
     fun forBase(krBase: String): MutableMap<String, org.hl7.fhir.r4.model.Library> =
         caches.computeIfAbsent(krBase.trimEnd('/')) { ConcurrentHashMap() }
+
+    /** Drop cached KR `Library` resources across all knowledge-repository bases. */
+    fun clearAll(): Int {
+        var n = 0
+        for (bucket in caches.values) {
+            n += bucket.size
+            bucket.clear()
+        }
+        caches.clear()
+        return n
+    }
 }

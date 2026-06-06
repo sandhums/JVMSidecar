@@ -5,10 +5,12 @@ import ca.uhn.fhir.rest.api.EncodingEnum
 import com.atrius.sidecar.fhir.newSidecarFhirContext
 import com.atrius.sidecar.fhir.sidecarCrSettings
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor
 import ca.uhn.fhir.rest.client.interceptor.ThreadLocalCapturingInterceptor
 import com.atrius.sidecar.api.ApplyPlanDefinitionRequest
 import com.atrius.sidecar.api.ApplyPlanDefinitionResponse
+import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.evaluationFailedException
 import kotlinx.serialization.json.JsonElement
 import org.hl7.fhir.instance.model.api.IBaseResource
@@ -53,6 +55,20 @@ class SidecarPlanDefinitionApplier {
             !request.planDefinitionId.isNullOrBlank() || !request.planDefinitionUrl.isNullOrBlank(),
         ) { "planDefinitionId or planDefinitionUrl is required" }
 
+        val startedNs = System.nanoTime()
+        var error = false
+        try {
+            return applyInternal(request)
+        } catch (e: Exception) {
+            error = true
+            throw e
+        } finally {
+            val durationMs = (System.nanoTime() - startedNs) / 1_000_000
+            SidecarMetrics.recordApply(durationMs, request.planDefinitionId, error)
+        }
+    }
+
+    private fun applyInternal(request: ApplyPlanDefinitionRequest): ApplyPlanDefinitionResponse {
         val fhirHttpCapture = ThreadLocalCapturingInterceptor()
         val fhirContext = newSidecarFhirContext()
         val applyParameters = buildApplyParameters(request.parameters)
@@ -66,7 +82,10 @@ class SidecarPlanDefinitionApplier {
         val contentClient =
             fhirContext.newRestfulGenericClient(libraryBase).configureSidecarFhirClient(fhirHttpCapture)
         val clinicalClient =
-            fhirContext.newRestfulGenericClient(clinicalBase).configureSidecarFhirClient(fhirHttpCapture)
+            fhirContext
+                .newRestfulGenericClient(clinicalBase)
+                .configureSidecarFhirClient(fhirHttpCapture)
+                .configureClinicalBearerAuth(request.fhirAuthorization?.accessToken)
         val terminologyClient =
             fhirContext.newRestfulGenericClient(terminologyBase).configureSidecarFhirClient(fhirHttpCapture)
 
@@ -199,6 +218,14 @@ private val fhirHttpTraceLogger = LoggerFactory.getLogger("com.atrius.sidecar.fh
 private fun isFhirHttpTraceEnabled(): Boolean =
     java.lang.Boolean.getBoolean("sidecar.fhir.http.log") ||
         System.getenv("SIDECAR_FHIR_HTTP_LOG")?.equals("true", ignoreCase = true) == true
+
+private fun IGenericClient.configureClinicalBearerAuth(accessToken: String?): IGenericClient {
+    val token = accessToken?.trim()?.takeIf { it.isNotEmpty() }
+    if (token != null) {
+        registerInterceptor(BearerTokenAuthInterceptor(token))
+    }
+    return this
+}
 
 private fun IGenericClient.configureSidecarFhirClient(capture: ThreadLocalCapturingInterceptor?): IGenericClient {
     capture?.let { registerInterceptor(it) }

@@ -25,6 +25,7 @@ internal class FhirLibraryElmLoader(
         val id = normalized.id?.takeIf { it.isNotBlank() } ?: return null
         val key = cacheKey(normalized)
         resourceCache[key]?.let { return it }
+        SidecarMetrics.recordKrLibraryFetch()
         val loaded = fetchLibraryUncached(id, normalized, requested) ?: return null
         resourceCache[key] = loaded
         return loaded

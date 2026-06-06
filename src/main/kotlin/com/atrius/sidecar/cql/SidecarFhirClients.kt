@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor
 import ca.uhn.fhir.rest.client.interceptor.ThreadLocalCapturingInterceptor
 import org.slf4j.LoggerFactory
@@ -24,17 +25,23 @@ internal object SidecarFhirClients {
 
     fun fhirContext(): FhirContext = context
 
-    fun client(baseUrl: String): IGenericClient {
+    fun client(baseUrl: String, accessToken: String? = null): IGenericClient {
         val base = baseUrl.trimEnd('/')
-        return clients.computeIfAbsent(base) { createClient(base) }
+        val token = accessToken?.trim()?.takeIf { it.isNotEmpty() }
+        if (token != null) {
+            // Per-request SMART tokens must not share the process-wide unauthenticated client cache.
+            return createClient(base, token)
+        }
+        return clients.computeIfAbsent(base) { createClient(base, accessToken = null) }
     }
 
     fun captureForBase(baseUrl: String): ThreadLocalCapturingInterceptor =
         captureByBase.computeIfAbsent(baseUrl.trimEnd('/')) { ThreadLocalCapturingInterceptor() }
 
-    private fun createClient(base: String): IGenericClient =
+    private fun createClient(base: String, accessToken: String?): IGenericClient =
         context.newRestfulGenericClient(base).apply {
             encoding = EncodingEnum.JSON
+            accessToken?.let { registerInterceptor(BearerTokenAuthInterceptor(it)) }
             captureByBase[base]?.let { registerInterceptor(it) }
             if (isFhirHttpTraceEnabled()) {
                 registerInterceptor(
