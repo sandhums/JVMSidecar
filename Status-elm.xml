@@ -1,0 +1,2805 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library xmlns="urn:hl7-org:elm:r1" xmlns:t="urn:hl7-org:elm-types:r1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:fhir="http://hl7.org/fhir" xmlns:qdm43="urn:healthit-gov:qdm:v4_3" xmlns:qdm53="urn:healthit-gov:qdm:v5_3" xmlns:a="urn:hl7-org:cql-annotations:r1" localId="0">
+   <annotation translatorVersion="3.25.0" translatorOptions="EnableAnnotations,EnableLocators,EnableResultTypes,EnableDetailedErrors,DisableListDemotion,DisableListPromotion" signatureLevel="Overloads" xsi:type="a:CqlToElmInfo"/>
+   <annotation xsi:type="a:Annotation">
+      <a:s r="1198">
+         <a:s>library Status version '1.15.000'</a:s>
+      </a:s>
+   </annotation>
+   <identifier id="Status" version="1.15.000"/>
+   <schemaIdentifier id="urn:hl7-org:elm" version="r1"/>
+   <usings>
+      <def localId="1" localIdentifier="System" uri="urn:hl7-org:elm-types:r1"/>
+      <def localId="206" locator="3:1-3:28" localIdentifier="QICore" uri="http://hl7.org/fhir">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="206">
+               <a:s>using </a:s>
+               <a:s>
+                  <a:s>QICore</a:s>
+               </a:s>
+               <a:s> version '6.0.0'</a:s>
+            </a:s>
+         </annotation>
+      </def>
+   </usings>
+   <includes>
+      <def localId="208" locator="5:1-5:56" localIdentifier="FHIRHelpers" path="FHIRHelpers" version="4.4.000">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="208">
+               <a:s>include </a:s>
+               <a:s>
+                  <a:s>FHIRHelpers</a:s>
+               </a:s>
+               <a:s> version '4.4.000' called FHIRHelpers</a:s>
+            </a:s>
+         </annotation>
+      </def>
+   </includes>
+   <codeSystems>
+      <def localId="210" locator="7:1-7:99" resultTypeName="t:CodeSystem" name="ObservationCategoryCodes" id="http://terminology.hl7.org/CodeSystem/observation-category" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="210">
+               <a:s>codesystem &quot;ObservationCategoryCodes&quot;: 'http://terminology.hl7.org/CodeSystem/observation-category'</a:s>
+            </a:s>
+         </annotation>
+      </def>
+      <def localId="212" locator="8:1-8:107" resultTypeName="t:CodeSystem" name="ConditionVerificationStatusCodes" id="http://terminology.hl7.org/CodeSystem/condition-ver-status" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="212">
+               <a:s>codesystem &quot;ConditionVerificationStatusCodes&quot;: 'http://terminology.hl7.org/CodeSystem/condition-ver-status'</a:s>
+            </a:s>
+         </annotation>
+      </def>
+   </codeSystems>
+   <codes>
+      <def localId="214" locator="10:1-10:66" resultTypeName="t:Code" name="exam" id="exam" display="exam" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="214">
+               <a:s>code &quot;exam&quot;: 'exam' from </a:s>
+               <a:s r="215">
+                  <a:s>&quot;ObservationCategoryCodes&quot;</a:s>
+               </a:s>
+               <a:s> display 'exam'</a:s>
+            </a:s>
+         </annotation>
+         <codeSystem localId="215" locator="10:26-10:51" resultTypeName="t:CodeSystem" name="ObservationCategoryCodes"/>
+      </def>
+      <def localId="217" locator="11:1-11:75" resultTypeName="t:Code" name="imaging" id="imaging" display="imaging" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="217">
+               <a:s>code &quot;imaging&quot;: 'imaging' from </a:s>
+               <a:s r="218">
+                  <a:s>&quot;ObservationCategoryCodes&quot;</a:s>
+               </a:s>
+               <a:s> display 'imaging'</a:s>
+            </a:s>
+         </annotation>
+         <codeSystem localId="218" locator="11:32-11:57" resultTypeName="t:CodeSystem" name="ObservationCategoryCodes"/>
+      </def>
+      <def localId="220" locator="12:1-12:87" resultTypeName="t:Code" name="confirmed" id="confirmed" display="confirmed" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="220">
+               <a:s>code &quot;confirmed&quot;: 'confirmed' from </a:s>
+               <a:s r="221">
+                  <a:s>ConditionVerificationStatusCodes</a:s>
+               </a:s>
+               <a:s> display 'confirmed'</a:s>
+            </a:s>
+         </annotation>
+         <codeSystem localId="221" locator="12:36-12:67" resultTypeName="t:CodeSystem" name="ConditionVerificationStatusCodes"/>
+      </def>
+      <def localId="223" locator="13:1-13:93" resultTypeName="t:Code" name="unconfirmed" id="unconfirmed" display="unconfirmed" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="223">
+               <a:s>code &quot;unconfirmed&quot;: 'unconfirmed' from </a:s>
+               <a:s r="224">
+                  <a:s>ConditionVerificationStatusCodes</a:s>
+               </a:s>
+               <a:s> display 'unconfirmed'</a:s>
+            </a:s>
+         </annotation>
+         <codeSystem localId="224" locator="13:40-13:71" resultTypeName="t:CodeSystem" name="ConditionVerificationStatusCodes"/>
+      </def>
+      <def localId="226" locator="14:1-14:93" resultTypeName="t:Code" name="provisional" id="provisional" display="provisional" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="226">
+               <a:s>code &quot;provisional&quot;: 'provisional' from </a:s>
+               <a:s r="227">
+                  <a:s>ConditionVerificationStatusCodes</a:s>
+               </a:s>
+               <a:s> display 'provisional'</a:s>
+            </a:s>
+         </annotation>
+         <codeSystem localId="227" locator="14:40-14:71" resultTypeName="t:CodeSystem" name="ConditionVerificationStatusCodes"/>
+      </def>
+      <def localId="229" locator="15:1-15:96" resultTypeName="t:Code" name="differential" id="differential" display="differential" accessLevel="Public">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="229">
+               <a:s>code &quot;differential&quot;: 'differential' from </a:s>
+               <a:s r="230">
+                  <a:s>ConditionVerificationStatusCodes</a:s>
+               </a:s>
+               <a:s> display 'differential'</a:s>
+            </a:s>
+         </annotation>
+         <codeSystem localId="230" locator="15:42-15:73" resultTypeName="t:CodeSystem" name="ConditionVerificationStatusCodes"/>
+      </def>
+   </codes>
+   <contexts>
+      <def localId="235" locator="17:1-17:15" name="Patient"/>
+   </contexts>
+   <statements>
+      <def localId="233" locator="17:1-17:15" name="Patient" context="Patient">
+         <expression localId="234" xsi:type="SingletonFrom">
+            <operand localId="232" locator="17:1-17:15" dataType="fhir:Patient" templateId="http://hl7.org/fhir/us/qicore/StructureDefinition/qicore-patient" xsi:type="Retrieve"/>
+         </expression>
+      </def>
+      <def localId="236" locator="23:1-30:7" name="verified" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="236">
+               <a:s>//This library contains functions used to constrain FHIR resource elements for measures authored by NCQA, based on QICore 6.0.0 resources including IG and authoring patterns. The functions may appear similar to some QICoreCommon functions but differ in that they have constraints that are relevant for measures authored by NCQA.
+
+//Condition
+//Returns conditions in the given list that either have no verification status or have a verification status of confirmed, unconfirmed, provisional, or differential
+define fluent function verified(conditions List&lt;Choice&lt;ConditionProblemsHealthConcerns, ConditionEncounterDiagnosis>>):
+  </a:s>
+               <a:s r="326">
+                  <a:s r="326">
+                     <a:s>
+                        <a:s r="251">
+                           <a:s r="252">
+                              <a:s>
+                                 <a:s>conditions</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> C</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="262">
+                        <a:s>where </a:s>
+                        <a:s r="262">
+                           <a:s r="270">
+                              <a:s r="268">
+                                 <a:s r="263">
+                                    <a:s>C</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="268">
+                                    <a:s>verificationStatus</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> is not null</a:s>
+                           </a:s>
+                           <a:s> implies
+      </a:s>
+                           <a:s r="271">
+                              <a:s>(</a:s>
+                              <a:s r="271">
+                                 <a:s r="272">
+                                    <a:s r="273">
+                                       <a:s r="274">
+                                          <a:s r="280">
+                                             <a:s r="275">
+                                                <a:s>C</a:s>
+                                             </a:s>
+                                             <a:s>.</a:s>
+                                             <a:s r="280">
+                                                <a:s>verificationStatus</a:s>
+                                             </a:s>
+                                          </a:s>
+                                          <a:s> ~ </a:s>
+                                          <a:s r="281">
+                                             <a:s>&quot;confirmed&quot;</a:s>
+                                          </a:s>
+                                       </a:s>
+                                       <a:s>
+        or </a:s>
+                                       <a:s r="287">
+                                          <a:s r="293">
+                                             <a:s r="288">
+                                                <a:s>C</a:s>
+                                             </a:s>
+                                             <a:s>.</a:s>
+                                             <a:s r="293">
+                                                <a:s>verificationStatus</a:s>
+                                             </a:s>
+                                          </a:s>
+                                          <a:s> ~ </a:s>
+                                          <a:s r="294">
+                                             <a:s>&quot;unconfirmed&quot;</a:s>
+                                          </a:s>
+                                       </a:s>
+                                    </a:s>
+                                    <a:s>
+        or </a:s>
+                                    <a:s r="300">
+                                       <a:s r="306">
+                                          <a:s r="301">
+                                             <a:s>C</a:s>
+                                          </a:s>
+                                          <a:s>.</a:s>
+                                          <a:s r="306">
+                                             <a:s>verificationStatus</a:s>
+                                          </a:s>
+                                       </a:s>
+                                       <a:s> ~ </a:s>
+                                       <a:s r="307">
+                                          <a:s>&quot;provisional&quot;</a:s>
+                                       </a:s>
+                                    </a:s>
+                                 </a:s>
+                                 <a:s>
+        or </a:s>
+                                 <a:s r="313">
+                                    <a:s r="319">
+                                       <a:s r="314">
+                                          <a:s>C</a:s>
+                                       </a:s>
+                                       <a:s>.</a:s>
+                                       <a:s r="319">
+                                          <a:s>verificationStatus</a:s>
+                                       </a:s>
+                                    </a:s>
+                                    <a:s> ~ </a:s>
+                                    <a:s r="320">
+                                       <a:s>&quot;differential&quot;</a:s>
+                                    </a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s>
+      )</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="335" xsi:type="ListTypeSpecifier">
+            <elementType localId="336" xsi:type="ChoiceTypeSpecifier">
+               <choice localId="337" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+               <choice localId="338" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+            </elementType>
+         </resultTypeSpecifier>
+         <expression localId="326" locator="24:3-30:7" xsi:type="Query">
+            <resultTypeSpecifier localId="331" xsi:type="ListTypeSpecifier">
+               <elementType localId="332" xsi:type="ChoiceTypeSpecifier">
+                  <choice localId="333" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                  <choice localId="334" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+               </elementType>
+            </resultTypeSpecifier>
+            <source localId="251" locator="24:3-24:14" alias="C">
+               <resultTypeSpecifier localId="257" xsi:type="ListTypeSpecifier">
+                  <elementType localId="258" xsi:type="ChoiceTypeSpecifier">
+                     <choice localId="259" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                     <choice localId="260" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                  </elementType>
+               </resultTypeSpecifier>
+               <expression localId="252" locator="24:3-24:12" name="conditions" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="253" xsi:type="ListTypeSpecifier">
+                     <elementType localId="254" xsi:type="ChoiceTypeSpecifier">
+                        <choice localId="255" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                        <choice localId="256" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                     </elementType>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="262" locator="25:5-30:7" resultTypeName="t:Boolean" xsi:type="Implies">
+               <operand localId="270" locator="25:11-25:42" resultTypeName="t:Boolean" xsi:type="Not">
+                  <operand localId="269" locator="25:11-25:42" resultTypeName="t:Boolean" xsi:type="IsNull">
+                     <operand localId="268" locator="25:11-25:30" resultTypeName="t:Concept" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                        <operand localId="267" path="verificationStatus" scope="C" xsi:type="Property"/>
+                     </operand>
+                  </operand>
+               </operand>
+               <operand localId="271" locator="26:7-30:7" resultTypeName="t:Boolean" xsi:type="Or">
+                  <operand localId="272" locator="26:8-28:47" resultTypeName="t:Boolean" xsi:type="Or">
+                     <operand localId="273" locator="26:8-27:47" resultTypeName="t:Boolean" xsi:type="Or">
+                        <operand localId="274" locator="26:8-26:41" resultTypeName="t:Boolean" xsi:type="Equivalent">
+                           <signature localId="285" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                           <signature localId="286" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                           <operand localId="280" locator="26:8-26:27" resultTypeName="t:Concept" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                              <operand localId="279" path="verificationStatus" scope="C" xsi:type="Property"/>
+                           </operand>
+                           <operand localId="283" xsi:type="ToConcept">
+                              <signature localId="284" name="t:Code" xsi:type="NamedTypeSpecifier"/>
+                              <operand localId="281" locator="26:31-26:41" resultTypeName="t:Code" name="confirmed" xsi:type="CodeRef"/>
+                           </operand>
+                        </operand>
+                        <operand localId="287" locator="27:12-27:47" resultTypeName="t:Boolean" xsi:type="Equivalent">
+                           <signature localId="298" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                           <signature localId="299" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                           <operand localId="293" locator="27:12-27:31" resultTypeName="t:Concept" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                              <operand localId="292" path="verificationStatus" scope="C" xsi:type="Property"/>
+                           </operand>
+                           <operand localId="296" xsi:type="ToConcept">
+                              <signature localId="297" name="t:Code" xsi:type="NamedTypeSpecifier"/>
+                              <operand localId="294" locator="27:35-27:47" resultTypeName="t:Code" name="unconfirmed" xsi:type="CodeRef"/>
+                           </operand>
+                        </operand>
+                     </operand>
+                     <operand localId="300" locator="28:12-28:47" resultTypeName="t:Boolean" xsi:type="Equivalent">
+                        <signature localId="311" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        <signature localId="312" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        <operand localId="306" locator="28:12-28:31" resultTypeName="t:Concept" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                           <operand localId="305" path="verificationStatus" scope="C" xsi:type="Property"/>
+                        </operand>
+                        <operand localId="309" xsi:type="ToConcept">
+                           <signature localId="310" name="t:Code" xsi:type="NamedTypeSpecifier"/>
+                           <operand localId="307" locator="28:35-28:47" resultTypeName="t:Code" name="provisional" xsi:type="CodeRef"/>
+                        </operand>
+                     </operand>
+                  </operand>
+                  <operand localId="313" locator="29:12-29:48" resultTypeName="t:Boolean" xsi:type="Equivalent">
+                     <signature localId="324" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                     <signature localId="325" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                     <operand localId="319" locator="29:12-29:31" resultTypeName="t:Concept" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                        <operand localId="318" path="verificationStatus" scope="C" xsi:type="Property"/>
+                     </operand>
+                     <operand localId="322" xsi:type="ToConcept">
+                        <signature localId="323" name="t:Code" xsi:type="NamedTypeSpecifier"/>
+                        <operand localId="320" locator="29:35-29:48" resultTypeName="t:Code" name="differential" xsi:type="CodeRef"/>
+                     </operand>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="248" name="conditions">
+            <operandTypeSpecifier localId="237" locator="23:44-23:117" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="244" xsi:type="ListTypeSpecifier">
+                  <elementType localId="245" xsi:type="ChoiceTypeSpecifier">
+                     <choice localId="246" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                     <choice localId="247" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                  </elementType>
+               </resultTypeSpecifier>
+               <elementType localId="240" locator="23:49-23:116" xsi:type="ChoiceTypeSpecifier">
+                  <resultTypeSpecifier localId="241" xsi:type="ChoiceTypeSpecifier">
+                     <choice localId="242" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                     <choice localId="243" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <choice localId="238" locator="23:56-23:86" resultTypeName="fhir:Condition" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+                  <choice localId="239" locator="23:89-23:115" resultTypeName="fhir:Condition" name="fhir:Condition" xsi:type="NamedTypeSpecifier"/>
+               </elementType>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="339" locator="33:1-35:57" name="isAssessmentPerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="339">
+               <a:s>//Assessment, Performed
+define fluent function isAssessmentPerformed(Obs List&lt;ObservationScreeningAssessment>):
+  </a:s>
+               <a:s r="367">
+                  <a:s r="367">
+                     <a:s>
+                        <a:s r="347">
+                           <a:s r="348">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="366">
+                        <a:s>where </a:s>
+                        <a:s r="366">
+                           <a:s r="356">
+                              <a:s r="354">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="356">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="357">
+                              <a:s>{ </a:s>
+                              <a:s r="358">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="360">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="362">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="372" xsi:type="ListTypeSpecifier">
+            <elementType localId="373" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="367" locator="34:3-35:57" xsi:type="Query">
+            <resultTypeSpecifier localId="370" xsi:type="ListTypeSpecifier">
+               <elementType localId="371" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="347" locator="34:3-34:7" alias="O">
+               <resultTypeSpecifier localId="351" xsi:type="ListTypeSpecifier">
+                  <elementType localId="352" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="348" locator="34:3-34:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="349" xsi:type="ListTypeSpecifier">
+                     <elementType localId="350" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="366" locator="35:5-35:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="356" locator="35:11-35:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="355" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="357" locator="35:23-35:57" xsi:type="List">
+                  <resultTypeSpecifier localId="364" xsi:type="ListTypeSpecifier">
+                     <elementType localId="365" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="358" locator="35:25-35:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="360" locator="35:34-35:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="362" locator="35:45-35:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="344" name="Obs">
+            <operandTypeSpecifier localId="340" locator="33:50-33:85" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="342" xsi:type="ListTypeSpecifier">
+                  <elementType localId="343" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="341" locator="33:55-33:84" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="374" locator="38:1-41:99" name="isDeviceOrderPersonalUseDevices" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="374">
+               <a:s>//Device, Order - Personal Use Devices
+define fluent function isDeviceOrderPersonalUseDevices(DeviceRequest List&lt;DeviceRequest>):
+  </a:s>
+               <a:s r="418">
+                  <a:s r="418">
+                     <a:s>
+                        <a:s r="382">
+                           <a:s r="383">
+                              <a:s>
+                                 <a:s>DeviceRequest</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> D</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="389">
+                        <a:s>where </a:s>
+                        <a:s r="389">
+                           <a:s r="400">
+                              <a:s r="392">
+                                 <a:s r="390">
+                                    <a:s>D</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="392">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="393">
+                                 <a:s>{ </a:s>
+                                 <a:s r="394">
+                                    <a:s>'active'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="396">
+                                    <a:s>'completed'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+      and </a:s>
+                           <a:s r="417">
+                              <a:s r="403">
+                                 <a:s r="401">
+                                    <a:s>D</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="403">
+                                    <a:s>intent</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="404">
+                                 <a:s>{</a:s>
+                                 <a:s r="405">
+                                    <a:s>'order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="407">
+                                    <a:s>'original-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="409">
+                                    <a:s>'reflex-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="411">
+                                    <a:s>'filler-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="413">
+                                    <a:s>'instance-order'</a:s>
+                                 </a:s>
+                                 <a:s>}</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="423" xsi:type="ListTypeSpecifier">
+            <elementType localId="424" name="fhir:DeviceRequest" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="418" locator="39:3-41:99" xsi:type="Query">
+            <resultTypeSpecifier localId="421" xsi:type="ListTypeSpecifier">
+               <elementType localId="422" name="fhir:DeviceRequest" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="382" locator="39:3-39:17" alias="D">
+               <resultTypeSpecifier localId="386" xsi:type="ListTypeSpecifier">
+                  <elementType localId="387" name="fhir:DeviceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="383" locator="39:3-39:15" name="DeviceRequest" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="384" xsi:type="ListTypeSpecifier">
+                     <elementType localId="385" name="fhir:DeviceRequest" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="389" locator="40:5-41:99" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="400" locator="40:11-40:47" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="392" locator="40:11-40:18" resultTypeName="fhir:DeviceRequestStatus" path="value" xsi:type="Property">
+                     <source localId="391" path="status" scope="D" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="393" locator="40:23-40:47" xsi:type="List">
+                     <resultTypeSpecifier localId="398" xsi:type="ListTypeSpecifier">
+                        <elementType localId="399" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="394" locator="40:25-40:32" resultTypeName="t:String" valueType="t:String" value="active" xsi:type="Literal"/>
+                     <element localId="396" locator="40:35-40:45" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="417" locator="41:11-41:99" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="403" locator="41:11-41:18" resultTypeName="fhir:RequestIntent" path="value" xsi:type="Property">
+                     <source localId="402" path="intent" scope="D" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="404" locator="41:23-41:99" xsi:type="List">
+                     <resultTypeSpecifier localId="415" xsi:type="ListTypeSpecifier">
+                        <elementType localId="416" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="405" locator="41:24-41:30" resultTypeName="t:String" valueType="t:String" value="order" xsi:type="Literal"/>
+                     <element localId="407" locator="41:33-41:48" resultTypeName="t:String" valueType="t:String" value="original-order" xsi:type="Literal"/>
+                     <element localId="409" locator="41:51-41:64" resultTypeName="t:String" valueType="t:String" value="reflex-order" xsi:type="Literal"/>
+                     <element localId="411" locator="41:67-41:80" resultTypeName="t:String" valueType="t:String" value="filler-order" xsi:type="Literal"/>
+                     <element localId="413" locator="41:83-41:98" resultTypeName="t:String" valueType="t:String" value="instance-order" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="379" name="DeviceRequest">
+            <operandTypeSpecifier localId="375" locator="38:70-38:88" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="377" xsi:type="ListTypeSpecifier">
+                  <elementType localId="378" name="fhir:DeviceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="376" locator="38:75-38:87" resultTypeName="fhir:DeviceRequest" name="fhir:DeviceRequest" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="425" locator="44:1-47:99" name="isDiagnosticStudyOrder" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="425">
+               <a:s>//Diagnostic Study, Order
+define fluent function isDiagnosticStudyOrder(ServiceRequest List&lt;ServiceRequest>):
+  </a:s>
+               <a:s r="469">
+                  <a:s r="469">
+                     <a:s>
+                        <a:s r="433">
+                           <a:s r="434">
+                              <a:s>
+                                 <a:s>ServiceRequest</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> S</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="440">
+                        <a:s>where </a:s>
+                        <a:s r="440">
+                           <a:s r="451">
+                              <a:s r="443">
+                                 <a:s r="441">
+                                    <a:s>S</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="443">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="444">
+                                 <a:s>{ </a:s>
+                                 <a:s r="445">
+                                    <a:s>'active'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="447">
+                                    <a:s>'completed'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+      and </a:s>
+                           <a:s r="468">
+                              <a:s r="454">
+                                 <a:s r="452">
+                                    <a:s>S</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="454">
+                                    <a:s>intent</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="455">
+                                 <a:s>{</a:s>
+                                 <a:s r="456">
+                                    <a:s>'order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="458">
+                                    <a:s>'original-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="460">
+                                    <a:s>'reflex-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="462">
+                                    <a:s>'filler-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="464">
+                                    <a:s>'instance-order'</a:s>
+                                 </a:s>
+                                 <a:s>}</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="474" xsi:type="ListTypeSpecifier">
+            <elementType localId="475" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="469" locator="45:3-47:99" xsi:type="Query">
+            <resultTypeSpecifier localId="472" xsi:type="ListTypeSpecifier">
+               <elementType localId="473" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="433" locator="45:3-45:18" alias="S">
+               <resultTypeSpecifier localId="437" xsi:type="ListTypeSpecifier">
+                  <elementType localId="438" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="434" locator="45:3-45:16" name="ServiceRequest" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="435" xsi:type="ListTypeSpecifier">
+                     <elementType localId="436" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="440" locator="46:5-47:99" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="451" locator="46:11-46:47" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="443" locator="46:11-46:18" resultTypeName="fhir:ServiceRequestStatus" path="value" xsi:type="Property">
+                     <source localId="442" path="status" scope="S" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="444" locator="46:23-46:47" xsi:type="List">
+                     <resultTypeSpecifier localId="449" xsi:type="ListTypeSpecifier">
+                        <elementType localId="450" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="445" locator="46:25-46:32" resultTypeName="t:String" valueType="t:String" value="active" xsi:type="Literal"/>
+                     <element localId="447" locator="46:35-46:45" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="468" locator="47:11-47:99" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="454" locator="47:11-47:18" resultTypeName="fhir:ServiceRequestIntent" path="value" xsi:type="Property">
+                     <source localId="453" path="intent" scope="S" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="455" locator="47:23-47:99" xsi:type="List">
+                     <resultTypeSpecifier localId="466" xsi:type="ListTypeSpecifier">
+                        <elementType localId="467" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="456" locator="47:24-47:30" resultTypeName="t:String" valueType="t:String" value="order" xsi:type="Literal"/>
+                     <element localId="458" locator="47:33-47:48" resultTypeName="t:String" valueType="t:String" value="original-order" xsi:type="Literal"/>
+                     <element localId="460" locator="47:51-47:64" resultTypeName="t:String" valueType="t:String" value="reflex-order" xsi:type="Literal"/>
+                     <element localId="462" locator="47:67-47:80" resultTypeName="t:String" valueType="t:String" value="filler-order" xsi:type="Literal"/>
+                     <element localId="464" locator="47:83-47:98" resultTypeName="t:String" valueType="t:String" value="instance-order" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="430" name="ServiceRequest">
+            <operandTypeSpecifier localId="426" locator="44:62-44:81" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="428" xsi:type="ListTypeSpecifier">
+                  <elementType localId="429" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="427" locator="44:67-44:80" resultTypeName="fhir:ServiceRequest" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="476" locator="50:1-53:99" name="isInterventionOrder" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="476">
+               <a:s>//Intervention, Order
+define fluent function isInterventionOrder(ServiceRequest List&lt;ServiceRequest>):
+  </a:s>
+               <a:s r="520">
+                  <a:s r="520">
+                     <a:s>
+                        <a:s r="484">
+                           <a:s r="485">
+                              <a:s>
+                                 <a:s>ServiceRequest</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> S</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="491">
+                        <a:s>where </a:s>
+                        <a:s r="491">
+                           <a:s r="502">
+                              <a:s r="494">
+                                 <a:s r="492">
+                                    <a:s>S</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="494">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="495">
+                                 <a:s>{ </a:s>
+                                 <a:s r="496">
+                                    <a:s>'active'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="498">
+                                    <a:s>'completed'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+      and </a:s>
+                           <a:s r="519">
+                              <a:s r="505">
+                                 <a:s r="503">
+                                    <a:s>S</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="505">
+                                    <a:s>intent</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="506">
+                                 <a:s>{</a:s>
+                                 <a:s r="507">
+                                    <a:s>'order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="509">
+                                    <a:s>'original-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="511">
+                                    <a:s>'reflex-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="513">
+                                    <a:s>'filler-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="515">
+                                    <a:s>'instance-order'</a:s>
+                                 </a:s>
+                                 <a:s>}</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="525" xsi:type="ListTypeSpecifier">
+            <elementType localId="526" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="520" locator="51:3-53:99" xsi:type="Query">
+            <resultTypeSpecifier localId="523" xsi:type="ListTypeSpecifier">
+               <elementType localId="524" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="484" locator="51:3-51:18" alias="S">
+               <resultTypeSpecifier localId="488" xsi:type="ListTypeSpecifier">
+                  <elementType localId="489" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="485" locator="51:3-51:16" name="ServiceRequest" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="486" xsi:type="ListTypeSpecifier">
+                     <elementType localId="487" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="491" locator="52:5-53:99" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="502" locator="52:11-52:47" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="494" locator="52:11-52:18" resultTypeName="fhir:ServiceRequestStatus" path="value" xsi:type="Property">
+                     <source localId="493" path="status" scope="S" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="495" locator="52:23-52:47" xsi:type="List">
+                     <resultTypeSpecifier localId="500" xsi:type="ListTypeSpecifier">
+                        <elementType localId="501" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="496" locator="52:25-52:32" resultTypeName="t:String" valueType="t:String" value="active" xsi:type="Literal"/>
+                     <element localId="498" locator="52:35-52:45" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="519" locator="53:11-53:99" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="505" locator="53:11-53:18" resultTypeName="fhir:ServiceRequestIntent" path="value" xsi:type="Property">
+                     <source localId="504" path="intent" scope="S" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="506" locator="53:23-53:99" xsi:type="List">
+                     <resultTypeSpecifier localId="517" xsi:type="ListTypeSpecifier">
+                        <elementType localId="518" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="507" locator="53:24-53:30" resultTypeName="t:String" valueType="t:String" value="order" xsi:type="Literal"/>
+                     <element localId="509" locator="53:33-53:48" resultTypeName="t:String" valueType="t:String" value="original-order" xsi:type="Literal"/>
+                     <element localId="511" locator="53:51-53:64" resultTypeName="t:String" valueType="t:String" value="reflex-order" xsi:type="Literal"/>
+                     <element localId="513" locator="53:67-53:80" resultTypeName="t:String" valueType="t:String" value="filler-order" xsi:type="Literal"/>
+                     <element localId="515" locator="53:83-53:98" resultTypeName="t:String" valueType="t:String" value="instance-order" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="481" name="ServiceRequest">
+            <operandTypeSpecifier localId="477" locator="50:59-50:78" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="479" xsi:type="ListTypeSpecifier">
+                  <elementType localId="480" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="478" locator="50:64-50:77" resultTypeName="fhir:ServiceRequest" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="527" locator="56:1-59:99" name="isLaboratoryTestOrder" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="527">
+               <a:s>//Laboratory Test, Order
+define fluent function isLaboratoryTestOrder(ServiceRequest List&lt;ServiceRequest>):
+  </a:s>
+               <a:s r="571">
+                  <a:s r="571">
+                     <a:s>
+                        <a:s r="535">
+                           <a:s r="536">
+                              <a:s>
+                                 <a:s>ServiceRequest</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> S</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="542">
+                        <a:s>where </a:s>
+                        <a:s r="542">
+                           <a:s r="553">
+                              <a:s r="545">
+                                 <a:s r="543">
+                                    <a:s>S</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="545">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="546">
+                                 <a:s>{ </a:s>
+                                 <a:s r="547">
+                                    <a:s>'active'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="549">
+                                    <a:s>'completed'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+      and </a:s>
+                           <a:s r="570">
+                              <a:s r="556">
+                                 <a:s r="554">
+                                    <a:s>S</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="556">
+                                    <a:s>intent</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="557">
+                                 <a:s>{</a:s>
+                                 <a:s r="558">
+                                    <a:s>'order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="560">
+                                    <a:s>'original-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="562">
+                                    <a:s>'reflex-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="564">
+                                    <a:s>'filler-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="566">
+                                    <a:s>'instance-order'</a:s>
+                                 </a:s>
+                                 <a:s>}</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="576" xsi:type="ListTypeSpecifier">
+            <elementType localId="577" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="571" locator="57:3-59:99" xsi:type="Query">
+            <resultTypeSpecifier localId="574" xsi:type="ListTypeSpecifier">
+               <elementType localId="575" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="535" locator="57:3-57:18" alias="S">
+               <resultTypeSpecifier localId="539" xsi:type="ListTypeSpecifier">
+                  <elementType localId="540" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="536" locator="57:3-57:16" name="ServiceRequest" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="537" xsi:type="ListTypeSpecifier">
+                     <elementType localId="538" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="542" locator="58:5-59:99" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="553" locator="58:11-58:47" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="545" locator="58:11-58:18" resultTypeName="fhir:ServiceRequestStatus" path="value" xsi:type="Property">
+                     <source localId="544" path="status" scope="S" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="546" locator="58:23-58:47" xsi:type="List">
+                     <resultTypeSpecifier localId="551" xsi:type="ListTypeSpecifier">
+                        <elementType localId="552" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="547" locator="58:25-58:32" resultTypeName="t:String" valueType="t:String" value="active" xsi:type="Literal"/>
+                     <element localId="549" locator="58:35-58:45" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="570" locator="59:11-59:99" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="556" locator="59:11-59:18" resultTypeName="fhir:ServiceRequestIntent" path="value" xsi:type="Property">
+                     <source localId="555" path="intent" scope="S" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="557" locator="59:23-59:99" xsi:type="List">
+                     <resultTypeSpecifier localId="568" xsi:type="ListTypeSpecifier">
+                        <elementType localId="569" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="558" locator="59:24-59:30" resultTypeName="t:String" valueType="t:String" value="order" xsi:type="Literal"/>
+                     <element localId="560" locator="59:33-59:48" resultTypeName="t:String" valueType="t:String" value="original-order" xsi:type="Literal"/>
+                     <element localId="562" locator="59:51-59:64" resultTypeName="t:String" valueType="t:String" value="reflex-order" xsi:type="Literal"/>
+                     <element localId="564" locator="59:67-59:80" resultTypeName="t:String" valueType="t:String" value="filler-order" xsi:type="Literal"/>
+                     <element localId="566" locator="59:83-59:98" resultTypeName="t:String" valueType="t:String" value="instance-order" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="532" name="ServiceRequest">
+            <operandTypeSpecifier localId="528" locator="56:61-56:80" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="530" xsi:type="ListTypeSpecifier">
+                  <elementType localId="531" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="529" locator="56:66-56:79" resultTypeName="fhir:ServiceRequest" name="fhir:ServiceRequest" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="578" locator="62:1-67:5" name="isDiagnosticStudyPerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="578">
+               <a:s>//Diagnostic Study, Performed
+define fluent function isDiagnosticStudyPerformed(Obs List&lt;ObservationClinicalResult>):
+  </a:s>
+               <a:s r="634">
+                  <a:s r="634">
+                     <a:s>
+                        <a:s r="586">
+                           <a:s r="587">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="593">
+                        <a:s>where </a:s>
+                        <a:s r="593">
+                           <a:s r="606">
+                              <a:s r="596">
+                                 <a:s r="594">
+                                    <a:s>O</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="596">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="597">
+                                 <a:s>{ </a:s>
+                                 <a:s r="598">
+                                    <a:s>'final'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="600">
+                                    <a:s>'amended'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="602">
+                                    <a:s>'corrected'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+        and </a:s>
+                           <a:s r="607">
+                              <a:s>exists </a:s>
+                              <a:s r="629">
+                                 <a:s>( </a:s>
+                                 <a:s r="629">
+                                    <a:s>
+                                       <a:s r="608">
+                                          <a:s r="611">
+                                             <a:s>
+                                                <a:s>O.category</a:s>
+                                             </a:s>
+                                          </a:s>
+                                          <a:s> ObservationCategory</a:s>
+                                       </a:s>
+                                    </a:s>
+                                    <a:s>
+        </a:s>
+                                    <a:s r="621">
+                                       <a:s>where </a:s>
+                                       <a:s r="621">
+                                          <a:s r="622">
+                                             <a:s>( </a:s>
+                                             <a:s r="622">
+                                                <a:s>ObservationCategory</a:s>
+                                             </a:s>
+                                             <a:s> )</a:s>
+                                          </a:s>
+                                          <a:s> ~ </a:s>
+                                          <a:s r="623">
+                                             <a:s>&quot;imaging&quot;</a:s>
+                                          </a:s>
+                                       </a:s>
+                                    </a:s>
+                                 </a:s>
+                                 <a:s>
+    )</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="639" xsi:type="ListTypeSpecifier">
+            <elementType localId="640" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="634" locator="63:3-67:5" xsi:type="Query">
+            <resultTypeSpecifier localId="637" xsi:type="ListTypeSpecifier">
+               <elementType localId="638" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="586" locator="63:3-63:7" alias="O">
+               <resultTypeSpecifier localId="590" xsi:type="ListTypeSpecifier">
+                  <elementType localId="591" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="587" locator="63:3-63:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="588" xsi:type="ListTypeSpecifier">
+                     <elementType localId="589" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="593" locator="64:5-67:5" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="606" locator="64:11-64:57" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="596" locator="64:11-64:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                     <source localId="595" path="status" scope="O" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="597" locator="64:23-64:57" xsi:type="List">
+                     <resultTypeSpecifier localId="604" xsi:type="ListTypeSpecifier">
+                        <elementType localId="605" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="598" locator="64:25-64:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                     <element localId="600" locator="64:34-64:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                     <element localId="602" locator="64:45-64:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="607" locator="65:13-67:5" resultTypeName="t:Boolean" xsi:type="Exists">
+                  <operand localId="629" locator="65:20-67:5" xsi:type="Query">
+                     <resultTypeSpecifier localId="632" xsi:type="ListTypeSpecifier">
+                        <elementType localId="633" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <source localId="608" locator="65:22-65:51" alias="ObservationCategory">
+                        <resultTypeSpecifier localId="618" xsi:type="ListTypeSpecifier">
+                           <elementType localId="619" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        </resultTypeSpecifier>
+                        <expression localId="611" locator="65:22-65:31" xsi:type="Query">
+                           <resultTypeSpecifier localId="616" xsi:type="ListTypeSpecifier">
+                              <elementType localId="617" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                           </resultTypeSpecifier>
+                           <source localId="612" alias="$this">
+                              <expression localId="610" path="category" scope="O" xsi:type="Property"/>
+                           </source>
+                           <return localId="615" distinct="false">
+                              <expression localId="613" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                                 <operand localId="614" name="$this" xsi:type="AliasRef"/>
+                              </expression>
+                           </return>
+                        </expression>
+                     </source>
+                     <where localId="621" locator="66:9-66:49" resultTypeName="t:Boolean" xsi:type="Equivalent">
+                        <signature localId="627" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        <signature localId="628" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        <operand localId="622" locator="66:15-66:37" resultTypeName="t:Concept" name="ObservationCategory" xsi:type="AliasRef"/>
+                        <operand localId="625" xsi:type="ToConcept">
+                           <signature localId="626" name="t:Code" xsi:type="NamedTypeSpecifier"/>
+                           <operand localId="623" locator="66:41-66:49" resultTypeName="t:Code" name="imaging" xsi:type="CodeRef"/>
+                        </operand>
+                     </where>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="583" name="Obs">
+            <operandTypeSpecifier localId="579" locator="62:55-62:85" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="581" xsi:type="ListTypeSpecifier">
+                  <elementType localId="582" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="580" locator="62:60-62:84" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="641" locator="71:1-73:31" name="isEncounterPerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="641">
+               <a:s>//Encounter, Performed
+//General usage unless required otherwise by measure intent (e.g., follow-up encounters)
+define fluent function isEncounterPerformed(Enc List&lt;Encounter>):
+  </a:s>
+               <a:s r="664">
+                  <a:s r="664">
+                     <a:s>
+                        <a:s r="649">
+                           <a:s r="650">
+                              <a:s>
+                                 <a:s>Enc</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> E</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="656">
+                        <a:s>where </a:s>
+                        <a:s r="656">
+                           <a:s r="659">
+                              <a:s r="657">
+                                 <a:s>E</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="659">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> = </a:s>
+                           <a:s r="660">
+                              <a:s>'finished'</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="669" xsi:type="ListTypeSpecifier">
+            <elementType localId="670" name="fhir:Encounter" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="664" locator="72:3-73:31" xsi:type="Query">
+            <resultTypeSpecifier localId="667" xsi:type="ListTypeSpecifier">
+               <elementType localId="668" name="fhir:Encounter" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="649" locator="72:3-72:7" alias="E">
+               <resultTypeSpecifier localId="653" xsi:type="ListTypeSpecifier">
+                  <elementType localId="654" name="fhir:Encounter" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="650" locator="72:3-72:5" name="Enc" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="651" xsi:type="ListTypeSpecifier">
+                     <elementType localId="652" name="fhir:Encounter" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="656" locator="73:5-73:31" resultTypeName="t:Boolean" xsi:type="Equal">
+               <signature localId="662" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <signature localId="663" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <operand localId="659" locator="73:11-73:18" resultTypeName="fhir:EncounterStatus" path="value" xsi:type="Property">
+                  <source localId="658" path="status" scope="E" xsi:type="Property"/>
+               </operand>
+               <operand localId="660" locator="73:22-73:31" resultTypeName="t:String" valueType="t:String" value="finished" xsi:type="Literal"/>
+            </where>
+         </expression>
+         <operand localId="646" name="Enc">
+            <operandTypeSpecifier localId="642" locator="71:49-71:63" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="644" xsi:type="ListTypeSpecifier">
+                  <elementType localId="645" name="fhir:Encounter" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="643" locator="71:54-71:62" resultTypeName="fhir:Encounter" name="fhir:Encounter" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="671" locator="76:1-78:32" name="isImmunizationAdministered" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="671">
+               <a:s>//Immunization, Administered
+define fluent function isImmunizationAdministered(Immunization List&lt;Immunization>):
+  </a:s>
+               <a:s r="694">
+                  <a:s r="694">
+                     <a:s>
+                        <a:s r="679">
+                           <a:s r="680">
+                              <a:s>
+                                 <a:s>Immunization</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> I</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="686">
+                        <a:s>where </a:s>
+                        <a:s r="686">
+                           <a:s r="689">
+                              <a:s r="687">
+                                 <a:s>I</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="689">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> ~ </a:s>
+                           <a:s r="690">
+                              <a:s>'completed'</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="699" xsi:type="ListTypeSpecifier">
+            <elementType localId="700" name="fhir:Immunization" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="694" locator="77:3-78:32" xsi:type="Query">
+            <resultTypeSpecifier localId="697" xsi:type="ListTypeSpecifier">
+               <elementType localId="698" name="fhir:Immunization" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="679" locator="77:3-77:16" alias="I">
+               <resultTypeSpecifier localId="683" xsi:type="ListTypeSpecifier">
+                  <elementType localId="684" name="fhir:Immunization" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="680" locator="77:3-77:14" name="Immunization" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="681" xsi:type="ListTypeSpecifier">
+                     <elementType localId="682" name="fhir:Immunization" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="686" locator="78:5-78:32" resultTypeName="t:Boolean" xsi:type="Equivalent">
+               <signature localId="692" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <signature localId="693" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <operand localId="689" locator="78:11-78:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="688" path="status" scope="I" xsi:type="Property"/>
+               </operand>
+               <operand localId="690" locator="78:22-78:32" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+            </where>
+         </expression>
+         <operand localId="676" name="Immunization">
+            <operandTypeSpecifier localId="672" locator="76:64-76:81" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="674" xsi:type="ListTypeSpecifier">
+                  <elementType localId="675" name="fhir:Immunization" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="673" locator="76:69-76:80" resultTypeName="fhir:Immunization" name="fhir:Immunization" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="701" locator="81:1-83:32" name="isInterventionPerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="701">
+               <a:s>//Intervention, Performed
+define fluent function isInterventionPerformed(Proc List&lt;Procedure>):
+  </a:s>
+               <a:s r="724">
+                  <a:s r="724">
+                     <a:s>
+                        <a:s r="709">
+                           <a:s r="710">
+                              <a:s>
+                                 <a:s>Proc</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> P</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="716">
+                        <a:s>where </a:s>
+                        <a:s r="716">
+                           <a:s r="719">
+                              <a:s r="717">
+                                 <a:s>P</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="719">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> ~ </a:s>
+                           <a:s r="720">
+                              <a:s>'completed'</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="729" xsi:type="ListTypeSpecifier">
+            <elementType localId="730" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="724" locator="82:3-83:32" xsi:type="Query">
+            <resultTypeSpecifier localId="727" xsi:type="ListTypeSpecifier">
+               <elementType localId="728" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="709" locator="82:3-82:8" alias="P">
+               <resultTypeSpecifier localId="713" xsi:type="ListTypeSpecifier">
+                  <elementType localId="714" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="710" locator="82:3-82:6" name="Proc" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="711" xsi:type="ListTypeSpecifier">
+                     <elementType localId="712" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="716" locator="83:5-83:32" resultTypeName="t:Boolean" xsi:type="Equivalent">
+               <signature localId="722" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <signature localId="723" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <operand localId="719" locator="83:11-83:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="718" path="status" scope="P" xsi:type="Property"/>
+               </operand>
+               <operand localId="720" locator="83:22-83:32" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+            </where>
+         </expression>
+         <operand localId="706" name="Proc">
+            <operandTypeSpecifier localId="702" locator="81:53-81:67" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="704" xsi:type="ListTypeSpecifier">
+                  <elementType localId="705" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="703" locator="81:58-81:66" resultTypeName="fhir:Procedure" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="731" locator="86:1-88:32" name="isProcedurePerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="731">
+               <a:s>//Procedure, Performed
+define fluent function isProcedurePerformed(Proc List&lt;Procedure>):
+  </a:s>
+               <a:s r="754">
+                  <a:s r="754">
+                     <a:s>
+                        <a:s r="739">
+                           <a:s r="740">
+                              <a:s>
+                                 <a:s>Proc</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> P</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="746">
+                        <a:s>where </a:s>
+                        <a:s r="746">
+                           <a:s r="749">
+                              <a:s r="747">
+                                 <a:s>P</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="749">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> ~ </a:s>
+                           <a:s r="750">
+                              <a:s>'completed'</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="759" xsi:type="ListTypeSpecifier">
+            <elementType localId="760" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="754" locator="87:3-88:32" xsi:type="Query">
+            <resultTypeSpecifier localId="757" xsi:type="ListTypeSpecifier">
+               <elementType localId="758" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="739" locator="87:3-87:8" alias="P">
+               <resultTypeSpecifier localId="743" xsi:type="ListTypeSpecifier">
+                  <elementType localId="744" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="740" locator="87:3-87:6" name="Proc" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="741" xsi:type="ListTypeSpecifier">
+                     <elementType localId="742" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="746" locator="88:5-88:32" resultTypeName="t:Boolean" xsi:type="Equivalent">
+               <signature localId="752" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <signature localId="753" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <operand localId="749" locator="88:11-88:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="748" path="status" scope="P" xsi:type="Property"/>
+               </operand>
+               <operand localId="750" locator="88:22-88:32" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+            </where>
+         </expression>
+         <operand localId="736" name="Proc">
+            <operandTypeSpecifier localId="732" locator="86:50-86:64" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="734" xsi:type="ListTypeSpecifier">
+                  <elementType localId="735" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="733" locator="86:55-86:63" resultTypeName="fhir:Procedure" name="fhir:Procedure" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="761" locator="91:1-93:57" name="isLaboratoryTestPerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="761">
+               <a:s>//Laboratory Test, Performed
+define fluent function isLaboratoryTestPerformed(Obs List&lt;LaboratoryResultObservation>):
+  </a:s>
+               <a:s r="789">
+                  <a:s r="789">
+                     <a:s>
+                        <a:s r="769">
+                           <a:s r="770">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="788">
+                        <a:s>where </a:s>
+                        <a:s r="788">
+                           <a:s r="778">
+                              <a:s r="776">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="778">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="779">
+                              <a:s>{ </a:s>
+                              <a:s r="780">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="782">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="784">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="794" xsi:type="ListTypeSpecifier">
+            <elementType localId="795" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="789" locator="92:3-93:57" xsi:type="Query">
+            <resultTypeSpecifier localId="792" xsi:type="ListTypeSpecifier">
+               <elementType localId="793" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="769" locator="92:3-92:7" alias="O">
+               <resultTypeSpecifier localId="773" xsi:type="ListTypeSpecifier">
+                  <elementType localId="774" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="770" locator="92:3-92:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="771" xsi:type="ListTypeSpecifier">
+                     <elementType localId="772" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="788" locator="93:5-93:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="778" locator="93:11-93:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="777" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="779" locator="93:23-93:57" xsi:type="List">
+                  <resultTypeSpecifier localId="786" xsi:type="ListTypeSpecifier">
+                     <elementType localId="787" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="780" locator="93:25-93:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="782" locator="93:34-93:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="784" locator="93:45-93:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="766" name="Obs">
+            <operandTypeSpecifier localId="762" locator="91:54-91:86" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="764" xsi:type="ListTypeSpecifier">
+                  <elementType localId="765" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="763" locator="91:59-91:85" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="796" locator="96:1-99:99" name="isMedicationActive" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="796">
+               <a:s>//Medication, Active
+define fluent function isMedicationActive(MedicationRequest List&lt;MedicationRequest>):
+  </a:s>
+               <a:s r="837">
+                  <a:s r="837">
+                     <a:s>
+                        <a:s r="804">
+                           <a:s r="805">
+                              <a:s>
+                                 <a:s>MedicationRequest</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> M</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="811">
+                        <a:s>where </a:s>
+                        <a:s r="811">
+                           <a:s r="812">
+                              <a:s r="815">
+                                 <a:s r="813">
+                                    <a:s>M</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="815">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> = </a:s>
+                              <a:s r="816">
+                                 <a:s>'active'</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+      and </a:s>
+                           <a:s r="836">
+                              <a:s r="822">
+                                 <a:s r="820">
+                                    <a:s>M</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="822">
+                                    <a:s>intent</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="823">
+                                 <a:s>{</a:s>
+                                 <a:s r="824">
+                                    <a:s>'order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="826">
+                                    <a:s>'original-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="828">
+                                    <a:s>'reflex-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="830">
+                                    <a:s>'filler-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="832">
+                                    <a:s>'instance-order'</a:s>
+                                 </a:s>
+                                 <a:s>}</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="842" xsi:type="ListTypeSpecifier">
+            <elementType localId="843" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="837" locator="97:3-99:99" xsi:type="Query">
+            <resultTypeSpecifier localId="840" xsi:type="ListTypeSpecifier">
+               <elementType localId="841" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="804" locator="97:3-97:21" alias="M">
+               <resultTypeSpecifier localId="808" xsi:type="ListTypeSpecifier">
+                  <elementType localId="809" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="805" locator="97:3-97:19" name="MedicationRequest" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="806" xsi:type="ListTypeSpecifier">
+                     <elementType localId="807" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="811" locator="98:5-99:99" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="812" locator="98:11-98:29" resultTypeName="t:Boolean" xsi:type="Equal">
+                  <signature localId="818" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  <signature localId="819" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  <operand localId="815" locator="98:11-98:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                     <source localId="814" path="status" scope="M" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="816" locator="98:22-98:29" resultTypeName="t:String" valueType="t:String" value="active" xsi:type="Literal"/>
+               </operand>
+               <operand localId="836" locator="99:11-99:99" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="822" locator="99:11-99:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                     <source localId="821" path="intent" scope="M" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="823" locator="99:23-99:99" xsi:type="List">
+                     <resultTypeSpecifier localId="834" xsi:type="ListTypeSpecifier">
+                        <elementType localId="835" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="824" locator="99:24-99:30" resultTypeName="t:String" valueType="t:String" value="order" xsi:type="Literal"/>
+                     <element localId="826" locator="99:33-99:48" resultTypeName="t:String" valueType="t:String" value="original-order" xsi:type="Literal"/>
+                     <element localId="828" locator="99:51-99:64" resultTypeName="t:String" valueType="t:String" value="reflex-order" xsi:type="Literal"/>
+                     <element localId="830" locator="99:67-99:80" resultTypeName="t:String" valueType="t:String" value="filler-order" xsi:type="Literal"/>
+                     <element localId="832" locator="99:83-99:98" resultTypeName="t:String" valueType="t:String" value="instance-order" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="801" name="MedicationRequest">
+            <operandTypeSpecifier localId="797" locator="96:61-96:83" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="799" xsi:type="ListTypeSpecifier">
+                  <elementType localId="800" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="798" locator="96:66-96:82" resultTypeName="fhir:MedicationRequest" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="844" locator="102:1-104:63" name="isMedicationDispensed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="844">
+               <a:s>//Medication, Dispensed
+define fluent function isMedicationDispensed(Med List&lt;MedicationDispense>):
+  </a:s>
+               <a:s r="872">
+                  <a:s r="872">
+                     <a:s>
+                        <a:s r="852">
+                           <a:s r="853">
+                              <a:s>
+                                 <a:s>Med</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> M</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="871">
+                        <a:s>where </a:s>
+                        <a:s r="871">
+                           <a:s r="861">
+                              <a:s r="859">
+                                 <a:s>M</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="861">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="862">
+                              <a:s>{ </a:s>
+                              <a:s r="863">
+                                 <a:s>'completed'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="865">
+                                 <a:s>'in-progress'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="867">
+                                 <a:s>'on-hold'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="877" xsi:type="ListTypeSpecifier">
+            <elementType localId="878" name="fhir:MedicationDispense" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="872" locator="103:3-104:63" xsi:type="Query">
+            <resultTypeSpecifier localId="875" xsi:type="ListTypeSpecifier">
+               <elementType localId="876" name="fhir:MedicationDispense" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="852" locator="103:3-103:7" alias="M">
+               <resultTypeSpecifier localId="856" xsi:type="ListTypeSpecifier">
+                  <elementType localId="857" name="fhir:MedicationDispense" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="853" locator="103:3-103:5" name="Med" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="854" xsi:type="ListTypeSpecifier">
+                     <elementType localId="855" name="fhir:MedicationDispense" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="871" locator="104:5-104:63" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="861" locator="104:11-104:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="860" path="status" scope="M" xsi:type="Property"/>
+               </operand>
+               <operand localId="862" locator="104:23-104:63" xsi:type="List">
+                  <resultTypeSpecifier localId="869" xsi:type="ListTypeSpecifier">
+                     <elementType localId="870" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="863" locator="104:25-104:35" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+                  <element localId="865" locator="104:38-104:50" resultTypeName="t:String" valueType="t:String" value="in-progress" xsi:type="Literal"/>
+                  <element localId="867" locator="104:53-104:61" resultTypeName="t:String" valueType="t:String" value="on-hold" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="849" name="Med">
+            <operandTypeSpecifier localId="845" locator="102:50-102:73" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="847" xsi:type="ListTypeSpecifier">
+                  <elementType localId="848" name="fhir:MedicationDispense" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="846" locator="102:55-102:72" resultTypeName="fhir:MedicationDispense" name="fhir:MedicationDispense" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="879" locator="107:1-110:97" name="isMedicationOrder" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="879">
+               <a:s>//Medication, Order
+define fluent function isMedicationOrder(MedicationRequest List&lt;MedicationRequest>):
+  </a:s>
+               <a:s r="923">
+                  <a:s r="923">
+                     <a:s>
+                        <a:s r="887">
+                           <a:s r="888">
+                              <a:s>
+                                 <a:s>MedicationRequest</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> M</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="894">
+                        <a:s>where </a:s>
+                        <a:s r="894">
+                           <a:s r="905">
+                              <a:s r="897">
+                                 <a:s r="895">
+                                    <a:s>M</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="897">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="898">
+                                 <a:s>{ </a:s>
+                                 <a:s r="899">
+                                    <a:s>'active'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="901">
+                                    <a:s>'completed'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+    and </a:s>
+                           <a:s r="922">
+                              <a:s r="908">
+                                 <a:s r="906">
+                                    <a:s>M</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="908">
+                                    <a:s>intent</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="909">
+                                 <a:s>{</a:s>
+                                 <a:s r="910">
+                                    <a:s>'order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="912">
+                                    <a:s>'original-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="914">
+                                    <a:s>'reflex-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="916">
+                                    <a:s>'filler-order'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="918">
+                                    <a:s>'instance-order'</a:s>
+                                 </a:s>
+                                 <a:s>}</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="928" xsi:type="ListTypeSpecifier">
+            <elementType localId="929" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="923" locator="108:3-110:97" xsi:type="Query">
+            <resultTypeSpecifier localId="926" xsi:type="ListTypeSpecifier">
+               <elementType localId="927" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="887" locator="108:3-108:21" alias="M">
+               <resultTypeSpecifier localId="891" xsi:type="ListTypeSpecifier">
+                  <elementType localId="892" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="888" locator="108:3-108:19" name="MedicationRequest" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="889" xsi:type="ListTypeSpecifier">
+                     <elementType localId="890" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="894" locator="109:5-110:97" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="905" locator="109:11-109:47" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="897" locator="109:11-109:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                     <source localId="896" path="status" scope="M" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="898" locator="109:23-109:47" xsi:type="List">
+                     <resultTypeSpecifier localId="903" xsi:type="ListTypeSpecifier">
+                        <elementType localId="904" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="899" locator="109:25-109:32" resultTypeName="t:String" valueType="t:String" value="active" xsi:type="Literal"/>
+                     <element localId="901" locator="109:35-109:45" resultTypeName="t:String" valueType="t:String" value="completed" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="922" locator="110:9-110:97" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="908" locator="110:9-110:16" resultTypeName="t:String" path="value" xsi:type="Property">
+                     <source localId="907" path="intent" scope="M" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="909" locator="110:21-110:97" xsi:type="List">
+                     <resultTypeSpecifier localId="920" xsi:type="ListTypeSpecifier">
+                        <elementType localId="921" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="910" locator="110:22-110:28" resultTypeName="t:String" valueType="t:String" value="order" xsi:type="Literal"/>
+                     <element localId="912" locator="110:31-110:46" resultTypeName="t:String" valueType="t:String" value="original-order" xsi:type="Literal"/>
+                     <element localId="914" locator="110:49-110:62" resultTypeName="t:String" valueType="t:String" value="reflex-order" xsi:type="Literal"/>
+                     <element localId="916" locator="110:65-110:78" resultTypeName="t:String" valueType="t:String" value="filler-order" xsi:type="Literal"/>
+                     <element localId="918" locator="110:81-110:96" resultTypeName="t:String" valueType="t:String" value="instance-order" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="884" name="MedicationRequest">
+            <operandTypeSpecifier localId="880" locator="107:60-107:82" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="882" xsi:type="ListTypeSpecifier">
+                  <elementType localId="883" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="881" locator="107:65-107:81" resultTypeName="fhir:MedicationRequest" name="fhir:MedicationRequest" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="930" locator="113:1-118:7" name="isPhysicalExamPerformed" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="930">
+               <a:s>//Physical Exam, Performed
+define fluent function isPhysicalExamPerformed(Obs List&lt;ObservationClinicalResult>):
+  </a:s>
+               <a:s r="986">
+                  <a:s r="986">
+                     <a:s>
+                        <a:s r="938">
+                           <a:s r="939">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="945">
+                        <a:s>where </a:s>
+                        <a:s r="945">
+                           <a:s r="958">
+                              <a:s r="948">
+                                 <a:s r="946">
+                                    <a:s>O</a:s>
+                                 </a:s>
+                                 <a:s>.</a:s>
+                                 <a:s r="948">
+                                    <a:s>status</a:s>
+                                 </a:s>
+                              </a:s>
+                              <a:s> in </a:s>
+                              <a:s r="949">
+                                 <a:s>{ </a:s>
+                                 <a:s r="950">
+                                    <a:s>'final'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="952">
+                                    <a:s>'amended'</a:s>
+                                 </a:s>
+                                 <a:s>, </a:s>
+                                 <a:s r="954">
+                                    <a:s>'corrected'</a:s>
+                                 </a:s>
+                                 <a:s> }</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s>
+      and </a:s>
+                           <a:s r="959">
+                              <a:s>exists </a:s>
+                              <a:s r="981">
+                                 <a:s>( </a:s>
+                                 <a:s r="981">
+                                    <a:s>
+                                       <a:s r="960">
+                                          <a:s r="963">
+                                             <a:s>
+                                                <a:s>O.category</a:s>
+                                             </a:s>
+                                          </a:s>
+                                          <a:s> ObservationCategory</a:s>
+                                       </a:s>
+                                    </a:s>
+                                    <a:s>
+          </a:s>
+                                    <a:s r="973">
+                                       <a:s>where </a:s>
+                                       <a:s r="973">
+                                          <a:s r="974">
+                                             <a:s>( </a:s>
+                                             <a:s r="974">
+                                                <a:s>ObservationCategory</a:s>
+                                             </a:s>
+                                             <a:s> )</a:s>
+                                          </a:s>
+                                          <a:s> ~ </a:s>
+                                          <a:s r="975">
+                                             <a:s>&quot;exam&quot;</a:s>
+                                          </a:s>
+                                       </a:s>
+                                    </a:s>
+                                 </a:s>
+                                 <a:s>
+      )</a:s>
+                              </a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="991" xsi:type="ListTypeSpecifier">
+            <elementType localId="992" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="986" locator="114:3-118:7" xsi:type="Query">
+            <resultTypeSpecifier localId="989" xsi:type="ListTypeSpecifier">
+               <elementType localId="990" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="938" locator="114:3-114:7" alias="O">
+               <resultTypeSpecifier localId="942" xsi:type="ListTypeSpecifier">
+                  <elementType localId="943" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="939" locator="114:3-114:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="940" xsi:type="ListTypeSpecifier">
+                     <elementType localId="941" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="945" locator="115:5-118:7" resultTypeName="t:Boolean" xsi:type="And">
+               <operand localId="958" locator="115:11-115:57" resultTypeName="t:Boolean" xsi:type="In">
+                  <operand localId="948" locator="115:11-115:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                     <source localId="947" path="status" scope="O" xsi:type="Property"/>
+                  </operand>
+                  <operand localId="949" locator="115:23-115:57" xsi:type="List">
+                     <resultTypeSpecifier localId="956" xsi:type="ListTypeSpecifier">
+                        <elementType localId="957" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <element localId="950" locator="115:25-115:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                     <element localId="952" locator="115:34-115:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                     <element localId="954" locator="115:45-115:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+                  </operand>
+               </operand>
+               <operand localId="959" locator="116:11-118:7" resultTypeName="t:Boolean" xsi:type="Exists">
+                  <operand localId="981" locator="116:18-118:7" xsi:type="Query">
+                     <resultTypeSpecifier localId="984" xsi:type="ListTypeSpecifier">
+                        <elementType localId="985" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                     </resultTypeSpecifier>
+                     <source localId="960" locator="116:20-116:49" alias="ObservationCategory">
+                        <resultTypeSpecifier localId="970" xsi:type="ListTypeSpecifier">
+                           <elementType localId="971" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        </resultTypeSpecifier>
+                        <expression localId="963" locator="116:20-116:29" xsi:type="Query">
+                           <resultTypeSpecifier localId="968" xsi:type="ListTypeSpecifier">
+                              <elementType localId="969" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                           </resultTypeSpecifier>
+                           <source localId="964" alias="$this">
+                              <expression localId="962" path="category" scope="O" xsi:type="Property"/>
+                           </source>
+                           <return localId="967" distinct="false">
+                              <expression localId="965" name="ToConcept" libraryName="FHIRHelpers" xsi:type="FunctionRef">
+                                 <operand localId="966" name="$this" xsi:type="AliasRef"/>
+                              </expression>
+                           </return>
+                        </expression>
+                     </source>
+                     <where localId="973" locator="117:11-117:48" resultTypeName="t:Boolean" xsi:type="Equivalent">
+                        <signature localId="979" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        <signature localId="980" name="t:Concept" xsi:type="NamedTypeSpecifier"/>
+                        <operand localId="974" locator="117:17-117:39" resultTypeName="t:Concept" name="ObservationCategory" xsi:type="AliasRef"/>
+                        <operand localId="977" xsi:type="ToConcept">
+                           <signature localId="978" name="t:Code" xsi:type="NamedTypeSpecifier"/>
+                           <operand localId="975" locator="117:43-117:48" resultTypeName="t:Code" name="exam" xsi:type="CodeRef"/>
+                        </operand>
+                     </where>
+                  </operand>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="935" name="Obs">
+            <operandTypeSpecifier localId="931" locator="113:52-113:82" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="933" xsi:type="ListTypeSpecifier">
+                  <elementType localId="934" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="932" locator="113:57-113:81" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="993" locator="121:1-123:57" name="isObservationBP" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="993">
+               <a:s>//Observation Vital Signs
+define fluent function isObservationBP(Obs List&lt;USCoreBloodPressureProfile>):
+  </a:s>
+               <a:s r="1021">
+                  <a:s r="1021">
+                     <a:s>
+                        <a:s r="1001">
+                           <a:s r="1002">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1020">
+                        <a:s>where </a:s>
+                        <a:s r="1020">
+                           <a:s r="1010">
+                              <a:s r="1008">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1010">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="1011">
+                              <a:s>{ </a:s>
+                              <a:s r="1012">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1014">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1016">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1026" xsi:type="ListTypeSpecifier">
+            <elementType localId="1027" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1021" locator="122:3-123:57" xsi:type="Query">
+            <resultTypeSpecifier localId="1024" xsi:type="ListTypeSpecifier">
+               <elementType localId="1025" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1001" locator="122:3-122:7" alias="O">
+               <resultTypeSpecifier localId="1005" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1006" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1002" locator="122:3-122:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1003" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1004" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1020" locator="123:5-123:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="1010" locator="123:11-123:18" resultTypeName="fhir:Status" path="value" xsi:type="Property">
+                  <source localId="1009" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1011" locator="123:23-123:57" xsi:type="List">
+                  <resultTypeSpecifier localId="1018" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1019" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="1012" locator="123:25-123:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="1014" locator="123:34-123:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="1016" locator="123:45-123:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="998" name="Obs">
+            <operandTypeSpecifier localId="994" locator="121:44-121:75" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="996" xsi:type="ListTypeSpecifier">
+                  <elementType localId="997" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="995" locator="121:49-121:74" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="1028" locator="125:1-127:57" name="isObservationBodyHeight" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="1028">
+               <a:s>define fluent function isObservationBodyHeight(Obs List&lt;USCoreBodyHeightProfile>):
+  </a:s>
+               <a:s r="1056">
+                  <a:s r="1056">
+                     <a:s>
+                        <a:s r="1036">
+                           <a:s r="1037">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1055">
+                        <a:s>where </a:s>
+                        <a:s r="1055">
+                           <a:s r="1045">
+                              <a:s r="1043">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1045">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="1046">
+                              <a:s>{ </a:s>
+                              <a:s r="1047">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1049">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1051">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1061" xsi:type="ListTypeSpecifier">
+            <elementType localId="1062" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1056" locator="126:3-127:57" xsi:type="Query">
+            <resultTypeSpecifier localId="1059" xsi:type="ListTypeSpecifier">
+               <elementType localId="1060" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1036" locator="126:3-126:7" alias="O">
+               <resultTypeSpecifier localId="1040" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1041" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1037" locator="126:3-126:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1038" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1039" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1055" locator="127:5-127:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="1045" locator="127:11-127:18" resultTypeName="fhir:Status" path="value" xsi:type="Property">
+                  <source localId="1044" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1046" locator="127:23-127:57" xsi:type="List">
+                  <resultTypeSpecifier localId="1053" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1054" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="1047" locator="127:25-127:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="1049" locator="127:34-127:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="1051" locator="127:45-127:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="1033" name="Obs">
+            <operandTypeSpecifier localId="1029" locator="125:52-125:80" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="1031" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1032" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="1030" locator="125:57-125:79" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="1063" locator="129:1-131:57" name="isObservationBodyWeight" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="1063">
+               <a:s>define fluent function isObservationBodyWeight(Obs List&lt;USCoreBodyWeightProfile>):
+  </a:s>
+               <a:s r="1091">
+                  <a:s r="1091">
+                     <a:s>
+                        <a:s r="1071">
+                           <a:s r="1072">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1090">
+                        <a:s>where </a:s>
+                        <a:s r="1090">
+                           <a:s r="1080">
+                              <a:s r="1078">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1080">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="1081">
+                              <a:s>{ </a:s>
+                              <a:s r="1082">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1084">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1086">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1096" xsi:type="ListTypeSpecifier">
+            <elementType localId="1097" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1091" locator="130:3-131:57" xsi:type="Query">
+            <resultTypeSpecifier localId="1094" xsi:type="ListTypeSpecifier">
+               <elementType localId="1095" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1071" locator="130:3-130:7" alias="O">
+               <resultTypeSpecifier localId="1075" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1076" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1072" locator="130:3-130:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1073" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1074" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1090" locator="131:5-131:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="1080" locator="131:11-131:18" resultTypeName="fhir:Status" path="value" xsi:type="Property">
+                  <source localId="1079" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1081" locator="131:23-131:57" xsi:type="List">
+                  <resultTypeSpecifier localId="1088" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1089" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="1082" locator="131:25-131:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="1084" locator="131:34-131:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="1086" locator="131:45-131:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="1068" name="Obs">
+            <operandTypeSpecifier localId="1064" locator="129:52-129:80" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="1066" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1067" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="1065" locator="129:57-129:79" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="1098" locator="133:1-135:57" name="isObservationBMI" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="1098">
+               <a:s>define fluent function isObservationBMI(Obs List&lt;USCoreBMIProfile>):
+  </a:s>
+               <a:s r="1126">
+                  <a:s r="1126">
+                     <a:s>
+                        <a:s r="1106">
+                           <a:s r="1107">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1125">
+                        <a:s>where </a:s>
+                        <a:s r="1125">
+                           <a:s r="1115">
+                              <a:s r="1113">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1115">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="1116">
+                              <a:s>{ </a:s>
+                              <a:s r="1117">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1119">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1121">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1131" xsi:type="ListTypeSpecifier">
+            <elementType localId="1132" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1126" locator="134:3-135:57" xsi:type="Query">
+            <resultTypeSpecifier localId="1129" xsi:type="ListTypeSpecifier">
+               <elementType localId="1130" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1106" locator="134:3-134:7" alias="O">
+               <resultTypeSpecifier localId="1110" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1111" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1107" locator="134:3-134:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1108" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1109" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1125" locator="135:5-135:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="1115" locator="135:11-135:18" resultTypeName="fhir:Status" path="value" xsi:type="Property">
+                  <source localId="1114" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1116" locator="135:23-135:57" xsi:type="List">
+                  <resultTypeSpecifier localId="1123" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1124" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="1117" locator="135:25-135:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="1119" locator="135:34-135:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="1121" locator="135:45-135:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="1103" name="Obs">
+            <operandTypeSpecifier localId="1099" locator="133:45-133:66" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="1101" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1102" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="1100" locator="133:50-133:65" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="1133" locator="138:1-140:57" name="isObservationPediatricBMI" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="1133">
+               <a:s>//Observation Pediatric BMI
+define fluent function isObservationPediatricBMI(Obs List&lt;USCorePediatricBMIforAgeObservationProfile>):
+  </a:s>
+               <a:s r="1161">
+                  <a:s r="1161">
+                     <a:s>
+                        <a:s r="1141">
+                           <a:s r="1142">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1160">
+                        <a:s>where </a:s>
+                        <a:s r="1160">
+                           <a:s r="1150">
+                              <a:s r="1148">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1150">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="1151">
+                              <a:s>{ </a:s>
+                              <a:s r="1152">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1154">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1156">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1166" xsi:type="ListTypeSpecifier">
+            <elementType localId="1167" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1161" locator="139:3-140:57" xsi:type="Query">
+            <resultTypeSpecifier localId="1164" xsi:type="ListTypeSpecifier">
+               <elementType localId="1165" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1141" locator="139:3-139:7" alias="O">
+               <resultTypeSpecifier localId="1145" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1146" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1142" locator="139:3-139:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1143" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1144" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1160" locator="140:5-140:57" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="1150" locator="140:11-140:18" resultTypeName="fhir:Status" path="value" xsi:type="Property">
+                  <source localId="1149" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1151" locator="140:23-140:57" xsi:type="List">
+                  <resultTypeSpecifier localId="1158" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1159" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="1152" locator="140:25-140:31" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="1154" locator="140:34-140:42" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="1156" locator="140:45-140:55" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="1138" name="Obs">
+            <operandTypeSpecifier localId="1134" locator="138:54-138:101" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="1136" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1137" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="1135" locator="138:59-138:100" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="1168" locator="143:1-145:28" name="isObservationSmokingStatus" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="1168">
+               <a:s>//Observation Smoking Status
+define fluent function isObservationSmokingStatus(Obs List&lt;USCoreSmokingStatusProfile>):
+  </a:s>
+               <a:s r="1191">
+                  <a:s r="1191">
+                     <a:s>
+                        <a:s r="1176">
+                           <a:s r="1177">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1183">
+                        <a:s>where </a:s>
+                        <a:s r="1183">
+                           <a:s r="1186">
+                              <a:s r="1184">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1186">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> = </a:s>
+                           <a:s r="1187">
+                              <a:s>'final'</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1196" xsi:type="ListTypeSpecifier">
+            <elementType localId="1197" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1191" locator="144:3-145:28" xsi:type="Query">
+            <resultTypeSpecifier localId="1194" xsi:type="ListTypeSpecifier">
+               <elementType localId="1195" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1176" locator="144:3-144:7" alias="O">
+               <resultTypeSpecifier localId="1180" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1181" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1177" locator="144:3-144:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1178" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1179" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1183" locator="145:5-145:28" resultTypeName="t:Boolean" xsi:type="Equal">
+               <signature localId="1189" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <signature localId="1190" name="t:String" xsi:type="NamedTypeSpecifier"/>
+               <operand localId="1186" locator="145:11-145:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="1185" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1187" locator="145:22-145:28" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+            </where>
+         </expression>
+         <operand localId="1173" name="Obs">
+            <operandTypeSpecifier localId="1169" locator="143:55-143:86" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="1171" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1172" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="1170" locator="143:60-143:85" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+      <def localId="1198" locator="148:1-150:72" name="isSymptom" context="Patient" accessLevel="Public" fluent="true" xsi:type="FunctionDef">
+         <annotation xsi:type="a:Annotation">
+            <a:s r="1198">
+               <a:s>//Symptom
+define fluent function isSymptom(Obs List&lt;SimpleObservation>):
+  </a:s>
+               <a:s r="1228">
+                  <a:s r="1228">
+                     <a:s>
+                        <a:s r="1206">
+                           <a:s r="1207">
+                              <a:s>
+                                 <a:s>Obs</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> O</a:s>
+                        </a:s>
+                     </a:s>
+                     <a:s>
+    </a:s>
+                     <a:s r="1227">
+                        <a:s>where </a:s>
+                        <a:s r="1227">
+                           <a:s r="1215">
+                              <a:s r="1213">
+                                 <a:s>O</a:s>
+                              </a:s>
+                              <a:s>.</a:s>
+                              <a:s r="1215">
+                                 <a:s>status</a:s>
+                              </a:s>
+                           </a:s>
+                           <a:s> in </a:s>
+                           <a:s r="1216">
+                              <a:s>{ </a:s>
+                              <a:s r="1217">
+                                 <a:s>'preliminary'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1219">
+                                 <a:s>'final'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1221">
+                                 <a:s>'amended'</a:s>
+                              </a:s>
+                              <a:s>, </a:s>
+                              <a:s r="1223">
+                                 <a:s>'corrected'</a:s>
+                              </a:s>
+                              <a:s> }</a:s>
+                           </a:s>
+                        </a:s>
+                     </a:s>
+                  </a:s>
+               </a:s>
+            </a:s>
+         </annotation>
+         <resultTypeSpecifier localId="1233" xsi:type="ListTypeSpecifier">
+            <elementType localId="1234" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+         </resultTypeSpecifier>
+         <expression localId="1228" locator="149:3-150:72" xsi:type="Query">
+            <resultTypeSpecifier localId="1231" xsi:type="ListTypeSpecifier">
+               <elementType localId="1232" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </resultTypeSpecifier>
+            <source localId="1206" locator="149:3-149:7" alias="O">
+               <resultTypeSpecifier localId="1210" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1211" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <expression localId="1207" locator="149:3-149:5" name="Obs" xsi:type="OperandRef">
+                  <resultTypeSpecifier localId="1208" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1209" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+               </expression>
+            </source>
+            <where localId="1227" locator="150:5-150:72" resultTypeName="t:Boolean" xsi:type="In">
+               <operand localId="1215" locator="150:11-150:18" resultTypeName="t:String" path="value" xsi:type="Property">
+                  <source localId="1214" path="status" scope="O" xsi:type="Property"/>
+               </operand>
+               <operand localId="1216" locator="150:23-150:72" xsi:type="List">
+                  <resultTypeSpecifier localId="1225" xsi:type="ListTypeSpecifier">
+                     <elementType localId="1226" name="t:String" xsi:type="NamedTypeSpecifier"/>
+                  </resultTypeSpecifier>
+                  <element localId="1217" locator="150:25-150:37" resultTypeName="t:String" valueType="t:String" value="preliminary" xsi:type="Literal"/>
+                  <element localId="1219" locator="150:40-150:46" resultTypeName="t:String" valueType="t:String" value="final" xsi:type="Literal"/>
+                  <element localId="1221" locator="150:49-150:57" resultTypeName="t:String" valueType="t:String" value="amended" xsi:type="Literal"/>
+                  <element localId="1223" locator="150:60-150:70" resultTypeName="t:String" valueType="t:String" value="corrected" xsi:type="Literal"/>
+               </operand>
+            </where>
+         </expression>
+         <operand localId="1203" name="Obs">
+            <operandTypeSpecifier localId="1199" locator="148:38-148:60" xsi:type="ListTypeSpecifier">
+               <resultTypeSpecifier localId="1201" xsi:type="ListTypeSpecifier">
+                  <elementType localId="1202" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+               </resultTypeSpecifier>
+               <elementType localId="1200" locator="148:43-148:59" resultTypeName="fhir:Observation" name="fhir:Observation" xsi:type="NamedTypeSpecifier"/>
+            </operandTypeSpecifier>
+         </operand>
+      </def>
+   </statements>
+</library>

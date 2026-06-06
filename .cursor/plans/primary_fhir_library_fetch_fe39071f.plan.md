@@ -4,16 +4,16 @@ overview: "Allow omitting inline primary ELM when `resolveLibraryArtifactsFromFh
 todos:
   - id: loader-refactor
     content: Refactor FhirElmLibrarySourceProvider into FhirLibraryElmLoader + shared Library cache; provider delegates
-    status: completed
+    status: cancelled
   - id: dtos-elm-optional
     content: "Dtos: elm String? = null; KDoc precedence (inline wins)"
-    status: completed
+    status: cancelled
   - id: evaluator-primary-fetch
     content: "SidecarEvaluator: branch blank elm + fetch primary; early loader/cache wiring"
-    status: completed
+    status: cancelled
   - id: tests-docs
     content: Unit tests for decodePreferredElmString; update docs/how-it-works.md
-    status: completed
+    status: cancelled
 isProject: false
 ---
 

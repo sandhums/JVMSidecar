@@ -1,6 +1,7 @@
 package com.atrius.sidecar.server
 
 import com.atrius.sidecar.cql.SidecarEvaluator
+import com.atrius.sidecar.cr.SidecarPlanDefinitionApplier
 import com.atrius.sidecar.server.routes.sidecarRoutes
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -12,6 +13,7 @@ import kotlinx.serialization.json.Json
 
 fun Application.module() {
     val evaluator = SidecarEvaluator()
+    val planApplier = SidecarPlanDefinitionApplier()
 
     install(ContentNegotiation) {
         json(
@@ -24,5 +26,5 @@ fun Application.module() {
 
     install(StatusPages) { configureStatusPages() }
 
-    routing { sidecarRoutes(evaluator) }
+    routing { sidecarRoutes(evaluator, planApplier) }
 }

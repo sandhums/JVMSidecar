@@ -21,7 +21,7 @@ internal fun Throwable.toDetailedEvaluationMessage(): String =
                 val body = t.responseBody?.trim()?.takeIf { it.isNotEmpty() }
                 if (body != null) {
                     append(" Response: ")
-                    append(if (body.length > 2000) body.take(2000) + "…" else body)
+                    append(if (body.length > 2048) body.take(2048) + "…" else body)
                 }
             }
             t = t.cause

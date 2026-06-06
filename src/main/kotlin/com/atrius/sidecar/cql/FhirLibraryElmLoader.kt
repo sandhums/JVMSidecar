@@ -14,22 +14,52 @@ import org.hl7.fhir.r4.model.Library
  */
 internal class FhirLibraryElmLoader(
     private val client: IGenericClient,
-    private val fetched: MutableMap<String, Library>,
+    krBase: String? = null,
+    fetched: MutableMap<String, Library>? = null,
 ) {
+    private val resourceCache: MutableMap<String, Library> =
+        fetched ?: FhirLibraryResourceCaches.forBase(krBase ?: client.serverBase)
+
     fun loadLibrary(requested: VersionedIdentifier): Library? {
-        val id = requested.id?.takeIf { it.isNotBlank() } ?: return null
-        val key = cacheKey(requested)
-        fetched[key]?.let { return it }
-        val loaded = fetchLibraryUncached(id, requested) ?: return null
-        fetched[key] = loaded
+        val normalized = normalizeLibraryIdentifier(requested)
+        val id = normalized.id?.takeIf { it.isNotBlank() } ?: return null
+        val key = cacheKey(normalized)
+        resourceCache[key]?.let { return it }
+        val loaded = fetchLibraryUncached(id, normalized, requested) ?: return null
+        resourceCache[key] = loaded
         return loaded
     }
 
-    private fun fetchLibraryUncached(logicalId: String, requested: VersionedIdentifier): Library? {
+    private fun fetchLibraryUncached(
+        logicalId: String,
+        normalized: VersionedIdentifier,
+        original: VersionedIdentifier,
+    ): Library? {
         readLibraryById(logicalId)?.let { lib ->
-            if (libraryMatchesRequest(lib, requested)) return lib
+            if (libraryMatchesRequest(lib, normalized)) return lib
         }
-        return searchLibraryByName(logicalId, requested)
+        searchLibraryByName(logicalId, normalized)?.let { return it }
+        if (isAtriusCanonicalLibraryIdentifier(original)) {
+            val canonicalUrl = original.id?.takeIf { it.isNotBlank() } ?: return null
+            return searchLibraryByCanonicalUrl(canonicalUrl, normalized)
+        }
+        return null
+    }
+
+    private fun searchLibraryByCanonicalUrl(canonicalUrl: String, requested: VersionedIdentifier): Library? {
+        val bundle =
+            try {
+                client.search<Bundle>().forResource(Library::class.java).where(
+                    StringClientParam("url").matches().value(canonicalUrl),
+                ).returnBundle(Bundle::class.java).execute()
+            } catch (_: Exception) {
+                return null
+            }
+        val reqVersion = requested.version?.takeIf { it.isNotBlank() }
+        return bundle.entry.orEmpty().asSequence().mapNotNull { entry -> entry.resource as? Library }.firstOrNull { lib ->
+            (lib.url == canonicalUrl || lib.name == requested.id) &&
+                (reqVersion.isNullOrBlank() || versionsCompatible(lib.version, requested))
+        }
     }
 
     private fun readLibraryById(id: String): Library? =
@@ -64,6 +94,17 @@ internal class FhirLibraryElmLoader(
         if (!idMatches) return false
         return versionsCompatible(lib.version, requested)
     }
+}
+
+/** Picks base64-decoded CQL source from [Library.content] (`text/cql`). */
+internal fun pickCqlAttachmentBytes(library: Library): ByteArray? {
+    for (c in library.content) {
+        val ct = c.contentType?.lowercase() ?: continue
+        if (ct == "text/cql" || ct.startsWith("text/cql;")) {
+            if (c.hasData()) return c.data
+        }
+    }
+    return null
 }
 
 /**

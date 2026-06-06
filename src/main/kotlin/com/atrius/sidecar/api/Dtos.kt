@@ -10,8 +10,18 @@ import kotlinx.serialization.json.JsonNames
 @Serializable
 data class HealthResponse(val status: String)
 
+/** JSON error body for failed requests (evaluate + generic handlers). FHIR fields set when upstream FHIR contributed to the failure. */
 @Serializable
-data class ErrorResponse(val error: String, val message: String, val path: String)
+data class ErrorResponse(
+    val error: String,
+    val message: String,
+    val path: String,
+    val causes: List<String> = emptyList(),
+    val fhirHttpVerb: String? = null,
+    val fhirRequestUrl: String? = null,
+    val fhirHttpStatus: Int? = null,
+    val fhirResponseSnippet: String? = null,
+)
 
 @Serializable
 enum class ElmFormat {
@@ -97,4 +107,33 @@ data class EvaluateExpressionResponse(
     val expression: String,
     val resultType: String?,
     val result: JsonElement,
+)
+
+/**
+ * Invokes **`PlanDefinition/$apply`** on the sidecar (CQF Clinical Reasoning).
+ *
+ * Provide [planDefinitionId] (KR logical id) or [planDefinitionUrl] (canonical). Clinical / terminology /
+ * content bases match [EvaluateExpressionRequest].
+ */
+@Serializable
+data class ApplyPlanDefinitionRequest(
+    val planDefinitionId: String? = null,
+    val planDefinitionUrl: String? = null,
+    val patientId: String,
+    /** CDS Hooks `context.userId` — Practitioner / PractitionerRole reference or id. */
+    val practitionerId: String? = null,
+    val hfsBaseUrl: String,
+    val htsBaseUrl: String,
+    val libraryBaseUrl: String? = null,
+    /** When false (default), prefetch resources overlay in-memory data; content/terminology still use REST bases. */
+    val useServerData: Boolean = false,
+    /** CDS Hooks prefetch map (key → FHIR resource JSON). */
+    val prefetch: Map<String, JsonElement>? = null,
+    val parameters: Map<String, JsonElement>? = null,
+)
+
+@Serializable
+data class ApplyPlanDefinitionResponse(
+    val planDefinitionId: String? = null,
+    val requestGroup: JsonElement,
 )

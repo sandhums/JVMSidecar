@@ -13,21 +13,36 @@ import org.hl7.fhir.r4.model.Library
  *
  * Uses [FhirLibraryElmLoader] so primary prefetch can populate the same cache (avoid duplicate GETs).
  *
- * Only **ELM** attachments are used (`application/elm+xml`, `application/elm+json`, with limited fallbacks).
- * **`text/cql`** is ignored here (no CQL→ELM compile in the sidecar).
+ * ELM attachments (`application/elm+xml`, `application/elm+json`) are preferred. When CQ Framework
+ * rejects pre-translated ELM (binary compatibility), it falls back to [getLibrarySource] — we serve
+ * **`text/cql`** from the same FHIR [Library] so includes like FHIRHelpers 4.4.000 can compile.
  */
 internal class FhirElmLibrarySourceProvider(
     private val loader: FhirLibraryElmLoader,
 ) : LibrarySourceProvider {
 
-    override fun getLibrarySource(libraryIdentifier: VersionedIdentifier): kotlinx.io.Source? = null
+    override fun getLibrarySource(libraryIdentifier: VersionedIdentifier): kotlinx.io.Source? =
+        getLibraryContent(libraryIdentifier, LibraryContentType.CQL)
 
     override fun getLibraryContent(libraryIdentifier: VersionedIdentifier, type: LibraryContentType): kotlinx.io.Source? {
-        if (type != LibraryContentType.JSON && type != LibraryContentType.XML) return null
         if (libraryIdentifier.id.isNullOrBlank()) return null
 
+        if (type == LibraryContentType.CQL) {
+            val library = loader.loadLibrary(libraryIdentifier) ?: return null
+            val bytes = pickCqlAttachmentBytes(library) ?: return null
+            return ByteArrayInputStream(bytes).asSource().buffered()
+        }
+
+        if (type != LibraryContentType.JSON && type != LibraryContentType.XML) return null
+
         val library = loader.loadLibrary(libraryIdentifier) ?: return null
-        val bytes = pickElmAttachmentBytes(library, type) ?: return null
+        val bytes =
+            pickElmAttachmentBytes(library, type)
+                ?: pickElmAttachmentBytes(
+                    library,
+                    if (type == LibraryContentType.JSON) LibraryContentType.XML else LibraryContentType.JSON,
+                )
+                ?: return null
         return ByteArrayInputStream(bytes).asSource().buffered()
     }
 }

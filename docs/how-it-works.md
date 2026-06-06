@@ -2,6 +2,36 @@
 
 This guide is for anyone using the HTTP API. You do **not** need to know Kotlin or Java to operate the service; the sections at the end only map concepts to source files if you want to explore the codebase.
 
+For the full **Atrius CMS165 CDS stack** (HFS, HTS, KR, bridge, cds-server, build/start), see the Atrius IG doc: **`AtriusIGDraft/docs/clinical-reasoning-stack.md`**.
+
+---
+
+## 0. Performance and AtriusIn (Atrius stack)
+
+### AtriusIn custom model
+
+Libraries using `using AtriusIn version '0.1.0'` require the **AtriusIn modelinfo** (profile types such as `ConditionEncounterDiagnosis`). The sidecar:
+
+1. Bundles `modelinfo/atriusin-modelinfo-0.1.0.xml` on the classpath.
+2. Optionally loads `Library/AtriusIn-ModelInfo` from **`libraryBaseUrl`** (KR).
+3. Registers `https://atrius.in/fhir/r4/atrius-in` as a data-provider alias to the FHIR retrieve stack.
+
+Source: `AtriusInModelSupport.kt`, `ElmLibraryHydration.kt`.
+
+### Caching (warm evaluate latency)
+
+| Mechanism | Scope | Effect |
+|-----------|-------|--------|
+| **`EvaluationLibraryCache`** | Process | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, includes)` |
+| **`FhirLibraryResourceCaches`** | Process | Reuses KR `Library` FHIR resources per KR base URL |
+| **`SidecarFhirClients`** | Process | Single `FhirContext`; pooled clients per base URL; `GET /metadata` once per base |
+
+Canonical Atrius library URLs (`https://atrius.in/fhir/r4/atrius-in/…`) are normalized to KR logical ids **before** any outbound HTTP to the public site (`LibraryIdentifierNormalization.kt`, `KrCanonicalLibrarySourceProvider.kt`).
+
+**Restart the sidecar** after re-importing KR libraries to clear caches.
+
+Typical CMS165 latency after these changes: **~2.7s cold**, **~160ms warm**.
+
 ---
 
 ## 1. What “evaluation” means here
@@ -98,7 +128,18 @@ Detailed KDoc: [`SidecarEvaluator.kt`](../src/main/kotlin/com/atrius/sidecar/cql
 ## 6. Debugging
 
 - **FHIR HTTP trace:** `-Dsidecar.fhir.http.log=true` or **`SIDECAR_FHIR_HTTP_LOG=true`** — logger **`com.atrius.sidecar.fhir.http`** (INFO).
-- **Rich errors:** evaluation failures attempt to include nested **`OperationOutcome`** text when the underlying exception is from HAPI — see **`EvaluationThrowableFormatting`**.
+- **Evaluation failures:** logger **`com.atrius.sidecar.evaluation`** (WARN) logs the failing FHIR call summary when an upstream **`BaseServerResponseException`** is present.
+- **`POST /v1/evaluate/expression` errors:** JSON **`ErrorResponse`** includes **`causes`** (exception chain) and a combined **`message`** with nested **`OperationOutcome`** text when HAPI provides it. When upstream FHIR returned an HTTP error — **`fhirHttpVerb`**, **`fhirRequestUrl`** (absolute best-effort from **`hfsBaseUrl`** if the captured URI is relative), **`fhirHttpStatus`**, **`fhirResponseSnippet`** (~2KB). HTTP status: **`evaluation_failed`** → **422** if no FHIR HTTP status is known, **502** when **`fhirHttpStatus`** is set.
+
+### Upstream FHIR vs sidecar (common confusion)
+
+The sidecar only **proxies** ELM evaluation to whatever **`hfsBaseUrl`** implements. **`502`** with a detailed **`fhirRequestUrl`** means the **clinical server** rejected or could not satisfy that request.
+
+- **404 on `GET …/Condition?…&_cursor=…`:** The CQL Engine FHIR stack uses **search** plus **bundle paging** (first page, then **next** via HAPI’s page client—often visible as **`_cursor`** or similar query parameters in the captured URL). If your HFS **does not implement paging / next links** (or returns **404** for those requests), expressions that retrieve many **`Condition`** rows (e.g. **`ActiveConditions`**) fail **even when single-page search works**. That matches minimal or in-progress servers whose README lists missing bundle/pagination behavior—not a JVM defect.
+
+- **404 or empty results on the first `Condition` search:** Often **unsupported search parameters** (e.g. **`subject`**) or deployment-specific paths (**`/fhir`** prefix). Compare **`fhirRequestUrl`** with what works in Postman against the same base.
+
+**Mitigations:** Point **`hfsBaseUrl`** at a FHIR server that supports the searches and paging the engine issues (e.g. full **HAPI FHIR JPA**), extend your HFS until it honors those interactions, or adjust CQL / test data so retrieves stay within what your server supports (sometimes impractical).
 
 ---
 

@@ -7,6 +7,7 @@ Small **[Kotlin](https://kotlinlang.org/)** service on **[Ktor](https://ktor.io/
 | Document | Purpose |
 |----------|---------|
 | **[docs/how-it-works.md](docs/how-it-works.md)** | How ELM libraries are loaded vs how FHIR servers are used, request fields, troubleshooting, and where code lives if you want to read it later. |
+| **AtriusIGDraft `docs/clinical-reasoning-stack.md`** | Full stack: HFS, HTS, KR, bridge, cds-server, Atrius IG build/import, smoke test, operations (sibling repo). |
 
 Start there for **three logical FHIR bases** (`hfsBaseUrl`, `htsBaseUrl`, optional **`libraryBaseUrl`**) and how the primary artifact can be inline **`elm`** or loaded from FHIR **`Library`** (plus **`include`** resolution).
 

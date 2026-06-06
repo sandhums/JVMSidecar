@@ -61,13 +61,18 @@ internal class ClasspathElmLibraryProvider(
 ) : LibrarySourceProvider {
     override fun getLibrarySource(libraryIdentifier: VersionedIdentifier) = null
 
-    override fun getLibraryContent(libraryIdentifier: VersionedIdentifier, type: LibraryContentType): kotlinx.io.Source? {
-        val ext =
-            when (type) {
-                LibraryContentType.XML -> "xml"
-                LibraryContentType.JSON -> "json"
-                else -> return null
-            }
+    override fun getLibraryContent(libraryIdentifier: VersionedIdentifier, type: LibraryContentType): kotlinx.io.Source? =
+        when (type) {
+            LibraryContentType.XML ->
+                openClasspathElm(libraryIdentifier, "xml")
+                    ?: openClasspathElm(libraryIdentifier, "json")
+            LibraryContentType.JSON ->
+                openClasspathElm(libraryIdentifier, "json")
+                    ?: openClasspathElm(libraryIdentifier, "xml")
+            else -> null
+        }
+
+    private fun openClasspathElm(libraryIdentifier: VersionedIdentifier, ext: String): kotlinx.io.Source? {
         val id = libraryIdentifier.id ?: return null
         val ver = libraryIdentifier.version?.takeIf { it.isNotBlank() }
         val candidates =
