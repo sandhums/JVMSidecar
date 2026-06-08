@@ -47,8 +47,27 @@ internal class FhirElmLibrarySourceProvider(
     }
 }
 
-internal fun cacheKey(vid: VersionedIdentifier): String =
+/** Logical KR library key: `libraryId` + optional `libraryVersion` (no content identity). */
+internal fun libraryLogicalCacheKey(vid: VersionedIdentifier): String =
     "${vid.id ?: ""}\u0000${vid.version?.takeIf { it.isNotBlank() } ?: ""}"
+
+/** Full KR resource cache key including [libraryContentIdentity]. */
+internal fun libraryResourceCacheKey(logicalKey: String, contentIdentity: String): String =
+    "$logicalKey\u0000$contentIdentity"
+
+internal fun libraryResourceCacheKey(library: Library): String {
+    val logical =
+        libraryLogicalCacheKey(
+            org.hl7.elm.r1.VersionedIdentifier().apply {
+                id = library.name ?: library.idElement?.idPart
+                version = library.version
+            },
+        )
+    return libraryResourceCacheKey(logical, libraryContentIdentity(library))
+}
+
+/** @deprecated Use [libraryLogicalCacheKey]; kept for tests naming continuity. */
+internal fun cacheKey(vid: VersionedIdentifier): String = libraryLogicalCacheKey(vid)
 
 internal fun versionsCompatible(resourceVersion: String?, requested: VersionedIdentifier): Boolean {
     val req = requested.version?.takeIf { it.isNotBlank() } ?: return true

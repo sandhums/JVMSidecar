@@ -1,32 +1,42 @@
 package com.atrius.sidecar.cql
 
-import ca.uhn.fhir.rest.client.api.IGenericClient
 import com.atrius.sidecar.api.EvaluateExpressionRequest
 import org.cqframework.cql.cql2elm.LibraryManager
 import org.cqframework.cql.cql2elm.ModelManager
 import org.hl7.elm.r1.Library
 import org.hl7.elm.r1.VersionedIdentifier
 
-internal fun evaluationCacheKey(request: EvaluateExpressionRequest): String? {
+internal fun evaluationCacheKey(
+    request: EvaluateExpressionRequest,
+    primaryContentIdentity: String,
+): String? {
     if (!request.elm.isNullOrBlank()) return null
     if (!request.resolveLibraryArtifactsFromFhir) return null
     return EvaluationLibraryCache.cacheKey(
         effectiveLibraryBase(request),
         request.libraryId,
         request.libraryVersion,
+        primaryContentIdentity,
         request.includedLibraries.map { "${it.libraryId}|${it.libraryVersion?.takeIf { v -> v.isNotBlank() } ?: ""}" },
     )
 }
 
+internal fun versionedIdentifierFromRequest(request: EvaluateExpressionRequest): VersionedIdentifier =
+    VersionedIdentifier().apply {
+        id = request.libraryId
+        request.libraryVersion?.takeIf { it.isNotBlank() }?.let { version = it }
+    }
+
 internal fun buildPreparedLibraryStackFromFhir(
     request: EvaluateExpressionRequest,
-    libraryClient: IGenericClient,
+    libraryLoader: FhirLibraryElmLoader,
     libraryBase: String,
+    preloadedPrimary: org.hl7.fhir.r4.model.Library? = null,
 ): PreparedLibraryStack {
-    val libraryLoader = FhirLibraryElmLoader(libraryClient, libraryBase)
     val vid = versionedIdentifierFromRequest(request)
     val resource =
-        libraryLoader.loadLibrary(vid)
+        preloadedPrimary
+            ?: libraryLoader.loadLibrary(vid)
             ?: throw IllegalArgumentException(
                 "FHIR Library not found for libraryId '${request.libraryId}'" +
                     (request.libraryVersion?.takeIf { it.isNotBlank() }?.let { v -> " version '$v'" } ?: "") +
@@ -164,12 +174,6 @@ private fun buildPreparedLibraryStack(
         libraryIdentifier = libraryIdentifier,
     )
 }
-
-private fun versionedIdentifierFromRequest(request: EvaluateExpressionRequest): VersionedIdentifier =
-    VersionedIdentifier().apply {
-        id = request.libraryId
-        request.libraryVersion?.takeIf { it.isNotBlank() }?.let { version = it }
-    }
 
 private fun versionedIdentifierFrom(src: VersionedIdentifier): VersionedIdentifier =
     VersionedIdentifier().apply {

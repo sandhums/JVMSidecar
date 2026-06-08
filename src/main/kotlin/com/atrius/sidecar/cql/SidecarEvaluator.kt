@@ -26,7 +26,7 @@ private const val FHIR_MODEL_URI = "http://hl7.org/fhir"
  * compatibility checks succeed.
  *
  * Performance: FHIR generic clients and KR `Library` resources are cached process-wide; hydrated
- * [PreparedLibraryStack] instances are cached per `(libraryBase, libraryId, version, includes)`;
+ * [PreparedLibraryStack] instances are cached per `(libraryBase, libraryId, version, contentIdentity, includes)`;
  * ValueSet `$expand` results are cached per HTS base via [CachedR4FhirTerminologyProvider].
  *
  * Debugging outbound FHIR HTTP: `-Dsidecar.fhir.http.log=true` or env `SIDECAR_FHIR_HTTP_LOG=true`, with logger
@@ -187,14 +187,29 @@ class SidecarEvaluator {
             return buildPreparedLibraryStackFromInlineElm(request, inlineElm, request.elmFormat) to null
         }
 
-        val cacheKey = evaluationCacheKey(request)
+        val libraryBase = effectiveLibraryBase(request)
+        val libraryClient = SidecarFhirClients.client(libraryBase)
+        val libraryLoader = FhirLibraryElmLoader(libraryClient, libraryBase)
+        val primaryResource =
+            libraryLoader.loadLibrary(versionedIdentifierFromRequest(request))
+                ?: throw IllegalArgumentException(
+                    "FHIR Library not found for libraryId '${request.libraryId}'" +
+                        (request.libraryVersion?.takeIf { it.isNotBlank() }?.let { v -> " version '$v'" } ?: "") +
+                        "; supply elm inline or ensure GET Library/${request.libraryId} or Library?name=… succeeds",
+                )
+        val primaryIdentity = libraryContentIdentity(primaryResource)
+        val cacheKey = evaluationCacheKey(request, primaryIdentity)
         if (cacheKey != null) {
             EvaluationLibraryCache.get(cacheKey)?.let { return it to true }
         }
 
-        val libraryBase = effectiveLibraryBase(request)
-        val libraryClient = SidecarFhirClients.client(libraryBase)
-        val built = buildPreparedLibraryStackFromFhir(request, libraryClient, libraryBase)
+        val built =
+            buildPreparedLibraryStackFromFhir(
+                request,
+                libraryLoader,
+                libraryBase,
+                preloadedPrimary = primaryResource,
+            )
         if (cacheKey != null) {
             EvaluationLibraryCache.put(cacheKey, built)
             return built to false

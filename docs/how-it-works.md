@@ -22,13 +22,13 @@ Source: `AtriusInModelSupport.kt`, `ElmLibraryHydration.kt`.
 
 | Mechanism | Scope | Effect |
 |-----------|-------|--------|
-| **`EvaluationLibraryCache`** | Process | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, includes)` |
-| **`FhirLibraryResourceCaches`** | Process | Reuses KR `Library` FHIR resources per KR base URL |
+| **`EvaluationLibraryCache`** | Process | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, **contentIdentity**, includes)` where **contentIdentity** is `Library.meta.versionId` or an ELM SHA-256 fallback |
+| **`FhirLibraryResourceCaches`** | Process | Reuses KR `Library` FHIR resources per KR base URL keyed by logical id/version **and** content identity |
 | **`SidecarFhirClients`** | Process | Single `FhirContext`; pooled clients per base URL; `GET /metadata` once per base |
 
 Canonical Atrius library URLs (`https://atrius.in/fhir/r4/atrius-in/…`) are normalized to KR logical ids **before** any outbound HTTP to the public site (`LibraryIdentifierNormalization.kt`, `KrCanonicalLibrarySourceProvider.kt`).
 
-**Restart the sidecar** after re-importing KR libraries to clear caches.
+**Same-version KR re-import** (new ELM, same `Library.version`) auto-invalidates caches via `meta.versionId` / ELM fingerprint — manual `POST /v1/admin/cache/libraries/clear` is only needed if you suspect stale state without a KR `versionId` bump. **Restart the sidecar** still clears all process caches.
 
 Typical CMS165 latency after these changes: **~2.7s cold**, **~160ms warm**.
 

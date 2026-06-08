@@ -9,7 +9,7 @@ import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Library
 
 /**
- * Fetches R4 [Library] resources and caches them by [cacheKey] for reuse between primary prefetch and
+ * Fetches R4 [Library] resources and caches them by logical id/version plus [libraryContentIdentity] for reuse between primary prefetch and
  * [FhirElmLibrarySourceProvider].
  */
 internal class FhirLibraryElmLoader(
@@ -23,12 +23,19 @@ internal class FhirLibraryElmLoader(
     fun loadLibrary(requested: VersionedIdentifier): Library? {
         val normalized = normalizeLibraryIdentifier(requested)
         val id = normalized.id?.takeIf { it.isNotBlank() } ?: return null
-        val key = cacheKey(normalized)
-        resourceCache[key]?.let { return it }
+        val logicalKey = libraryLogicalCacheKey(normalized)
         SidecarMetrics.recordKrLibraryFetch()
         val loaded = fetchLibraryUncached(id, normalized, requested) ?: return null
-        resourceCache[key] = loaded
+        val fullKey = libraryResourceCacheKey(logicalKey, libraryContentIdentity(loaded))
+        resourceCache[fullKey]?.let { return it }
+        pruneStaleResourceCacheEntries(logicalKey, except = fullKey)
+        resourceCache[fullKey] = loaded
         return loaded
+    }
+
+    private fun pruneStaleResourceCacheEntries(logicalKey: String, except: String) {
+        val prefix = "$logicalKey\u0000"
+        resourceCache.keys.filter { it.startsWith(prefix) && it != except }.forEach { resourceCache.remove(it) }
     }
 
     private fun fetchLibraryUncached(

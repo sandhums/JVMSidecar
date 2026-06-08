@@ -10,6 +10,7 @@ import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor
 import ca.uhn.fhir.rest.client.interceptor.ThreadLocalCapturingInterceptor
 import com.atrius.sidecar.api.ApplyPlanDefinitionRequest
 import com.atrius.sidecar.api.ApplyPlanDefinitionResponse
+import com.atrius.sidecar.cql.PrefetchRetrieveSupport
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.evaluationFailedException
 import kotlinx.serialization.json.JsonElement
@@ -161,21 +162,23 @@ class SidecarPlanDefinitionApplier {
         )
     }
 
+    /**
+     * CDS Hooks prefetch values are usually a Patient resource plus searchset [Bundle]s per key.
+     * [InMemoryFhirRepository] indexes by `(resourceType, id)`; nesting multiple Bundle resources
+     * (all with null id) causes `Duplicate key null`. Flatten like evaluate/expression prefetch.
+     */
     private fun prefetchToBundle(
         fhirContext: FhirContext,
         prefetch: Map<String, JsonElement>?,
     ): Bundle? {
-        if (prefetch.isNullOrEmpty()) return null
+        val resources = PrefetchRetrieveSupport.flattenPrefetchResources(fhirContext, prefetch)
+        if (resources.isEmpty()) return null
         val bundle = Bundle()
         bundle.type = Bundle.BundleType.COLLECTION
-        for ((_, elem) in prefetch) {
-            val json = elem.toString()
-            if (json == "null") continue
-            @Suppress("UNCHECKED_CAST")
-            val resource =
-                fhirContext.newJsonParser().parseResource(json) as? Resource
-                    ?: continue
-            bundle.addEntry().resource = resource
+        for (resource in resources) {
+            if (resource is Resource) {
+                bundle.addEntry().resource = resource
+            }
         }
         return if (bundle.entry.isEmpty()) null else bundle
     }

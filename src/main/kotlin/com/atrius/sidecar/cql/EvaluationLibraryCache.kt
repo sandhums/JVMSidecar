@@ -6,7 +6,7 @@ import org.hl7.elm.r1.Library
 import org.hl7.elm.r1.VersionedIdentifier
 import java.util.concurrent.ConcurrentHashMap
 
-/** Hydrated CQ stack reused across evaluate requests for the same primary library on the same KR base. */
+/** Hydrated CQ stack reused across evaluate requests for the same primary library content on the same KR base. */
 internal data class PreparedLibraryStack(
     val libraryManager: LibraryManager,
     val modelManager: ModelManager,
@@ -38,12 +38,13 @@ internal object EvaluationLibraryCache {
         libraryBase: String,
         libraryId: String,
         libraryVersion: String?,
+        primaryContentIdentity: String,
         includedLibrarySignatures: List<String>,
     ): String {
         val base = libraryBase.trimEnd('/')
         val ver = libraryVersion?.takeIf { it.isNotBlank() } ?: ""
         val includes = includedLibrarySignatures.sorted().joinToString(",")
-        return "$base\u0000$libraryId\u0000$ver\u0000$includes"
+        return "$base\u0000$libraryId\u0000$ver\u0000$primaryContentIdentity\u0000$includes"
     }
 }
 
