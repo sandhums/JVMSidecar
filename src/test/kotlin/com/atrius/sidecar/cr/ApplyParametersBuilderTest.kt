@@ -19,6 +19,23 @@ class ApplyParametersBuilderTest {
     }
 
     @Test
+    fun normalizesDateOnlyMeasurementPeriodToDateTime() {
+        val params =
+            buildApplyParameters(
+                mapOf(
+                    "Measurement Period" to
+                        buildJsonObject {
+                            put("low", JsonPrimitive("2026-01-01"))
+                            put("high", JsonPrimitive("2026-12-31"))
+                        },
+                ),
+            ) as Parameters
+        val period = params.parameter[0].value as org.hl7.fhir.r4.model.Period
+        assertEquals("2026-01-01T00:00:00.000+00:00", period.startElement.valueAsString)
+        assertEquals("2026-12-31T23:59:59.999+00:00", period.endElement.valueAsString)
+    }
+
+    @Test
     fun preservesExplicitMeasurementPeriod() {
         val params =
             buildApplyParameters(

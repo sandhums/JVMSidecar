@@ -54,17 +54,24 @@ class SidecarPlanDefinitionApplierPrefetchTest {
         val flat = PrefetchRetrieveSupport.flattenPrefetchResources(fhirContext, prefetch)
         assertEquals(3, flat.size)
 
-        val dataBundle = Bundle().apply { type = Bundle.BundleType.COLLECTION }
-        for (resource in flat) {
-            if (resource is Resource) {
-                dataBundle.addEntry().resource = resource
-            }
-        }
+        val dataBundle = applyPrefetchOverlayBundle(flat)
+        assertEquals(2, dataBundle.entry.size)
 
         val repo = InMemoryFhirRepository(fhirContext, dataBundle)
-        assertNotNull(repo.read(Patient::class.java, patient.idElement, emptyMap()))
         assertNotNull(repo.read(Condition::class.java, condition.idElement, emptyMap()))
         assertNotNull(repo.read(Encounter::class.java, encounter.idElement, emptyMap()))
         assertTrue(flat.none { it is Bundle })
+        assertTrue(dataBundle.entry.none { it.resource is Patient })
+    }
+
+    /** Mirrors [SidecarPlanDefinitionApplier] prefetch overlay rules (flatten + omit Patient). */
+    private fun applyPrefetchOverlayBundle(flat: List<Any>): Bundle {
+        val dataBundle = Bundle().apply { type = Bundle.BundleType.COLLECTION }
+        for (resource in flat) {
+            if (resource is Resource && resource !is Patient) {
+                dataBundle.addEntry().resource = resource
+            }
+        }
+        return dataBundle
     }
 }

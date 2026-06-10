@@ -21,11 +21,12 @@ import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CanonicalType
 import org.hl7.fhir.r4.model.CarePlan
 import org.hl7.fhir.r4.model.IdType
+import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.RequestGroup
 import org.hl7.fhir.r4.model.Resource
+import org.opencds.cqf.fhir.cql.LibraryEngine
 import org.opencds.cqf.fhir.cr.plandefinition.PlanDefinitionProcessor
 import org.opencds.cqf.fhir.utility.monad.Eithers
-import org.opencds.cqf.fhir.utility.repository.InMemoryFhirRepository
 import org.opencds.cqf.fhir.utility.repository.RestRepository
 import org.slf4j.LoggerFactory
 
@@ -91,16 +92,17 @@ class SidecarPlanDefinitionApplier {
             fhirContext.newRestfulGenericClient(terminologyBase).configureSidecarFhirClient(fhirHttpCapture)
 
         val prefetchBundle = prefetchToBundle(fhirContext, request.prefetch)
-        val localRepo =
-            if (prefetchBundle != null) {
-                InMemoryFhirRepository(fhirContext, prefetchBundle)
-            } else {
-                InMemoryFhirRepository(fhirContext)
-            }
 
         val dataRepo = RestRepository(clinicalClient)
         val contentRepo = RestRepository(contentClient)
         val terminologyRepo = RestRepository(terminologyClient)
+        val routingRepo =
+            SidecarRoutingRepository(
+                fhirContext = fhirContext,
+                data = dataRepo,
+                content = contentRepo,
+                terminology = terminologyRepo,
+            )
 
         val planDefinitionRef: org.opencds.cqf.fhir.utility.monad.Either3<
             IPrimitiveType<String>,
@@ -116,7 +118,9 @@ class SidecarPlanDefinitionApplier {
                     )
             }
 
-        val processor = PlanDefinitionProcessor(localRepo, sidecarCrSettings())
+        val crSettings = sidecarCrSettings()
+        val processor = PlanDefinitionProcessor(routingRepo, crSettings)
+        val libraryEngine = LibraryEngine(routingRepo, crSettings.evaluationSettings)
 
         val practitioner = request.practitionerId?.takeIf { it.isNotBlank() }
 
@@ -134,12 +138,9 @@ class SidecarPlanDefinitionApplier {
                     null,
                     null,
                     applyParameters,
-                    request.useServerData,
                     prefetchBundle,
                     null,
-                    dataRepo,
-                    contentRepo,
-                    terminologyRepo,
+                    libraryEngine,
                 )
             } catch (e: Exception) {
                 throw evaluationFailedException(
@@ -166,6 +167,14 @@ class SidecarPlanDefinitionApplier {
      * CDS Hooks prefetch values are usually a Patient resource plus searchset [Bundle]s per key.
      * [InMemoryFhirRepository] indexes by `(resourceType, id)`; nesting multiple Bundle resources
      * (all with null id) causes `Duplicate key null`. Flatten like evaluate/expression prefetch.
+     *
+     * **Patient is omitted** from the overlay. Per FHIR `PlanDefinition/$apply`, the evaluation
+     * subject is the required **`subject`** parameter (e.g. `Patient/cms165-demo`) — wired here as
+     * [ApplyPlanDefinitionRequest.patientId] → [PlanDefinitionProcessor.apply] subject argument; CQF
+     * resolves that reference from the clinical data repository. CDS Hooks prefetch `patient` is
+     * chart context for the EHR, not a second `$apply` subject. Duplicating Patient in the data
+     * bundle yields two subjects and breaks CQL `context Patient`. Legacy `evaluate/expression`
+     * binds the same subject via `contextParameter = Patient/{id}`.
      */
     private fun prefetchToBundle(
         fhirContext: FhirContext,
@@ -176,7 +185,7 @@ class SidecarPlanDefinitionApplier {
         val bundle = Bundle()
         bundle.type = Bundle.BundleType.COLLECTION
         for (resource in resources) {
-            if (resource is Resource) {
+            if (resource is Resource && resource !is Patient) {
                 bundle.addEntry().resource = resource
             }
         }
@@ -187,8 +196,12 @@ class SidecarPlanDefinitionApplier {
 }
 
 /**
- * CQF Clinical Reasoning R4 `$apply` returns a [CarePlan] whose contained [RequestGroup] holds actions.
- * Accept a bare [RequestGroup] when returned directly (e.g. tests or other processors).
+ * Resolve the [RequestGroup] from CQF `$apply` output.
+ *
+ * Per FHIR, [CarePlan.activity] links to request resources via [Reference] (RequestGroup,
+ * ServiceRequest, Task, …) — not only via `contained`. CQF initially builds
+ * `activity.reference = #{requestGroupId}` plus `CarePlan.contained` for the orchestration; some
+ * paths return a bare [RequestGroup] directly. This helper accepts either shape.
  */
 internal fun extractRequestGroup(result: IBaseResource?): RequestGroup {
     requireNotNull(result) { "PlanDefinition/\$apply returned null; expected RequestGroup" }

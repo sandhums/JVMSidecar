@@ -71,11 +71,19 @@ private fun looksLikeInterval(obj: JsonObject): Boolean =
 
 private fun intervalToPeriod(obj: JsonObject): Period {
     val period = Period()
-    obj.stringField("low")?.let { period.startElement = DateTimeType(it) }
-        ?: obj.stringField("start")?.let { period.startElement = DateTimeType(it) }
-    obj.stringField("high")?.let { period.endElement = DateTimeType(it) }
-        ?: obj.stringField("end")?.let { period.endElement = DateTimeType(it) }
+    obj.stringField("low")?.let { period.startElement = DateTimeType(normalizePeriodBound(it, isHigh = false)) }
+        ?: obj.stringField("start")?.let { period.startElement = DateTimeType(normalizePeriodBound(it, isHigh = false)) }
+    obj.stringField("high")?.let { period.endElement = DateTimeType(normalizePeriodBound(it, isHigh = true)) }
+        ?: obj.stringField("end")?.let { period.endElement = DateTimeType(normalizePeriodBound(it, isHigh = true)) }
     return period
+}
+
+/** Date-only bounds become full datetimes so CQF binds `Interval<DateTime>` for eCQM CQL libraries. */
+private fun normalizePeriodBound(raw: String, isHigh: Boolean): String {
+    if (raw.length == 10 && raw[4] == '-' && raw[7] == '-') {
+        return if (isHigh) "${raw}T23:59:59.999+00:00" else "${raw}T00:00:00.000+00:00"
+    }
+    return raw
 }
 
 private fun JsonObject.stringField(key: String): String? =
