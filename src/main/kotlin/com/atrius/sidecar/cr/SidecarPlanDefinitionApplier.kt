@@ -22,9 +22,9 @@ import org.hl7.fhir.r4.model.CanonicalType
 import org.hl7.fhir.r4.model.CarePlan
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Patient
+import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.RequestGroup
 import org.hl7.fhir.r4.model.Resource
-import org.opencds.cqf.fhir.cql.LibraryEngine
 import org.opencds.cqf.fhir.cr.plandefinition.PlanDefinitionProcessor
 import org.opencds.cqf.fhir.utility.monad.Eithers
 import org.opencds.cqf.fhir.utility.repository.RestRepository
@@ -73,7 +73,7 @@ class SidecarPlanDefinitionApplier {
     private fun applyInternal(request: ApplyPlanDefinitionRequest): ApplyPlanDefinitionResponse {
         val fhirHttpCapture = ThreadLocalCapturingInterceptor()
         val fhirContext = newSidecarFhirContext()
-        val applyParameters = buildApplyParameters(request.parameters)
+        val applyParameters = buildApplyParameters(fhirContext, request.parameters)
 
         val libraryBase = trimBase(
             request.libraryBaseUrl?.takeIf { it.isNotBlank() } ?: request.hfsBaseUrl,
@@ -91,7 +91,12 @@ class SidecarPlanDefinitionApplier {
         val terminologyClient =
             fhirContext.newRestfulGenericClient(terminologyBase).configureSidecarFhirClient(fhirHttpCapture)
 
-        val prefetchBundle = prefetchToBundle(fhirContext, request.prefetch)
+        val prefetchBundle =
+            if (request.useServerData) {
+                null
+            } else {
+                prefetchToBundle(fhirContext, request.prefetch)
+            }
 
         val dataRepo = RestRepository(clinicalClient)
         val contentRepo = RestRepository(contentClient)
@@ -120,27 +125,37 @@ class SidecarPlanDefinitionApplier {
 
         val crSettings = sidecarCrSettings()
         val processor = PlanDefinitionProcessor(routingRepo, crSettings)
-        val libraryEngine = LibraryEngine(routingRepo, crSettings.evaluationSettings)
 
-        val practitioner = request.practitionerId?.takeIf { it.isNotBlank() }
+        val subject = normalizeApplyReference(request.patientId, "Patient")!!
+        val encounter = normalizeApplyReference(request.encounterId, "Encounter")
+        val practitioner = normalizeApplyReference(request.practitionerId, "Practitioner")
+        val organization = normalizeApplyReference(request.organizationId, "Organization")
+        val userType = parseCodeableConceptElement(request.userType)
+        val userLanguage = parseCodeableConceptElement(request.userLanguage)
+        val userTaskContext = parseCodeableConceptElement(request.userTaskContext)
+        val setting = parseCodeableConceptElement(request.setting)
+        val settingContext = parseCodeableConceptElement(request.settingContext)
 
         val result =
             try {
                 processor.apply(
                     planDefinitionRef,
-                    request.patientId.trim(),
-                    null,
+                    subject,
+                    encounter,
                     practitioner,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
+                    organization,
+                    userType,
+                    userLanguage,
+                    userTaskContext,
+                    setting,
+                    settingContext,
                     applyParameters,
+                    request.useServerData,
                     prefetchBundle,
                     null,
-                    libraryEngine,
+                    dataRepo,
+                    contentRepo,
+                    terminologyRepo,
                 )
             } catch (e: Exception) {
                 throw evaluationFailedException(
@@ -151,14 +166,15 @@ class SidecarPlanDefinitionApplier {
                 )
             }
 
-        val requestGroup = extractRequestGroup(result)
+        val (carePlan, requestGroup) = normalizeApplyResult(result, subject)
 
-        val requestGroupJson =
-            fhirContext.newJsonParser().encodeResourceToString(requestGroup)
-        val requestGroupElement = json.parseToJsonElement(requestGroupJson)
+        val parser = fhirContext.newJsonParser()
+        val carePlanElement = json.parseToJsonElement(parser.encodeResourceToString(carePlan))
+        val requestGroupElement = json.parseToJsonElement(parser.encodeResourceToString(requestGroup))
 
         return ApplyPlanDefinitionResponse(
-            planDefinitionId = request.planDefinitionId ?: requestGroup.id,
+            planDefinitionId = request.planDefinitionId ?: carePlan.id ?: requestGroup.id,
+            carePlan = carePlanElement,
             requestGroup = requestGroupElement,
         )
     }
@@ -193,6 +209,36 @@ class SidecarPlanDefinitionApplier {
     }
 
     private fun trimBase(url: String): String = url.trimEnd('/')
+}
+
+/**
+ * Normalize CQF `$apply` output to spec shape: primary [CarePlan] with activity → [RequestGroup].
+ */
+internal fun normalizeApplyResult(result: IBaseResource?, subjectReference: String): Pair<CarePlan, RequestGroup> {
+    requireNotNull(result) { "PlanDefinition/\$apply returned null; expected CarePlan" }
+    return when (result) {
+        is CarePlan -> result to extractRequestGroup(result)
+        is RequestGroup -> wrapRequestGroupInCarePlan(result, subjectReference) to result
+        else ->
+            error(
+                "PlanDefinition/\$apply returned ${result.fhirType()}; expected CarePlan or RequestGroup",
+            )
+    }
+}
+
+/** Wrap a bare [RequestGroup] in a minimal [CarePlan] per FHIR `$apply` return shape. */
+internal fun wrapRequestGroupInCarePlan(requestGroup: RequestGroup, subjectReference: String): CarePlan {
+    val localId = requestGroup.idElement?.idPart?.takeIf { it.isNotBlank() } ?: "request-group"
+    if (requestGroup.idElement?.idPart.isNullOrBlank()) {
+        requestGroup.id = localId
+    }
+    return CarePlan().apply {
+        status = CarePlan.CarePlanStatus.ACTIVE
+        intent = CarePlan.CarePlanIntent.PROPOSAL
+        subject = Reference(subjectReference)
+        addContained(requestGroup)
+        addActivity().reference = Reference("#$localId")
+    }
 }
 
 /**

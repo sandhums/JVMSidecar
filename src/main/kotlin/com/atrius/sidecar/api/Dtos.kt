@@ -151,6 +151,10 @@ data class EvaluateExpressionResponse(
 /**
  * Invokes **`PlanDefinition/$apply`** on the sidecar (CQF Clinical Reasoning).
  *
+ * Mirrors FHIR operation inputs: [patientId] → **subject**; optional encounter / practitioner /
+ * organization references; CodeableConcept context ([userType], [userLanguage], [userTaskContext],
+ * [setting], [settingContext]) exposed to CQL as `%param` context variables per the CR IG.
+ *
  * Provide [planDefinitionId] (KR logical id) or [planDefinitionUrl] (canonical). Clinical / terminology /
  * content bases match [EvaluateExpressionRequest].
  */
@@ -158,16 +162,35 @@ data class EvaluateExpressionResponse(
 data class ApplyPlanDefinitionRequest(
     val planDefinitionId: String? = null,
     val planDefinitionUrl: String? = null,
+    /** FHIR `$apply` **subject** (Patient logical id or reference). */
     val patientId: String,
-    /** CDS Hooks `context.userId` — Practitioner / PractitionerRole reference or id. */
+    /** FHIR `$apply` **encounter** (Encounter logical id or reference). */
+    val encounterId: String? = null,
+    /**
+     * FHIR `$apply` **practitioner** — CDS Hooks `context.userId` when Practitioner / PractitionerRole.
+     * Full `ResourceType/id` references are passed through; bare ids default to `Practitioner/{id}`.
+     */
     val practitionerId: String? = null,
+    /** FHIR `$apply` **organization** (Organization logical id or reference). */
+    val organizationId: String? = null,
+    /** FHIR `$apply` **userType** (CodeableConcept JSON). */
+    val userType: JsonElement? = null,
+    /** FHIR `$apply` **userLanguage** (CodeableConcept JSON). */
+    val userLanguage: JsonElement? = null,
+    /** FHIR `$apply` **userTaskContext** (CodeableConcept JSON). */
+    val userTaskContext: JsonElement? = null,
+    /** FHIR `$apply` **setting** (CodeableConcept JSON). */
+    val setting: JsonElement? = null,
+    /** FHIR `$apply` **settingContext** (CodeableConcept JSON). */
+    val settingContext: JsonElement? = null,
     val hfsBaseUrl: String,
     val htsBaseUrl: String,
     val libraryBaseUrl: String? = null,
-    /** When false (default), prefetch resources overlay in-memory data; content/terminology still use REST bases. */
+    /** When true, clinical data comes from server REST only (no prefetch overlay). */
     val useServerData: Boolean = false,
-    /** CDS Hooks prefetch map (key → FHIR resource JSON). */
+    /** CDS Hooks prefetch map (key → FHIR resource JSON). Ignored when [useServerData] is true. */
     val prefetch: Map<String, JsonElement>? = null,
+    /** CQL library parameters (→ FHIR `$apply` **parameters**). */
     val parameters: Map<String, JsonElement>? = null,
     /** SMART bearer credentials for clinical FHIR ([hfsBaseUrl] only). */
     val fhirAuthorization: FhirAuthorizationCredentials? = null,
@@ -176,5 +199,8 @@ data class ApplyPlanDefinitionRequest(
 @Serializable
 data class ApplyPlanDefinitionResponse(
     val planDefinitionId: String? = null,
+    /** Primary FHIR `$apply` result: CarePlan with activity → RequestGroup. */
+    val carePlan: JsonElement,
+    /** Extracted RequestGroup for CDS card mapping (same resource referenced by [carePlan].activity). */
     val requestGroup: JsonElement,
 )

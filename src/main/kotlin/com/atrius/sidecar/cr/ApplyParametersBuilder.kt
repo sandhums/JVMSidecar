@@ -1,11 +1,16 @@
 package com.atrius.sidecar.cr
 
+import ca.uhn.fhir.context.FhirContext
 import java.time.LocalDate
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.booleanOrNull
 import org.hl7.fhir.instance.model.api.IBaseParameters
+import org.hl7.fhir.r4.model.BooleanType
+import org.hl7.fhir.r4.model.CodeableConcept
 import org.hl7.fhir.r4.model.DateTimeType
 import org.hl7.fhir.r4.model.Parameters
 import org.hl7.fhir.r4.model.Period
@@ -18,7 +23,10 @@ import org.hl7.fhir.r4.model.StringType
  * When no measurement period is supplied, defaults to the current calendar year so eCQM PlanDefinitions
  * can evaluate without every caller passing CQL parameters explicitly.
  */
-internal fun buildApplyParameters(parameters: Map<String, JsonElement>?): IBaseParameters? {
+internal fun buildApplyParameters(
+    fhirContext: FhirContext,
+    parameters: Map<String, JsonElement>?,
+): IBaseParameters? {
     val merged = mergeWithDefaultMeasurementPeriod(parameters)
     if (merged.isEmpty()) return null
 
@@ -27,17 +35,23 @@ internal fun buildApplyParameters(parameters: Map<String, JsonElement>?): IBaseP
         val component = params.addParameter().setName(name)
         when (element) {
             is JsonObject ->
-                if (looksLikeInterval(element)) {
-                    component.value = intervalToPeriod(element)
-                } else {
-                    throw IllegalArgumentException(
-                        "Unsupported object parameter '$name'; use interval {low, high} or scalar JSON",
-                    )
+                when {
+                    looksLikeInterval(element) -> component.value = intervalToPeriod(element)
+                    looksLikeCodeableConcept(element) ->
+                        component.value = parseCodeableConcept(element)
+                            ?: throw IllegalArgumentException("Invalid CodeableConcept for parameter '$name'")
+                    else ->
+                        throw IllegalArgumentException(
+                            "Unsupported object parameter '$name'; use interval {low, high}, CodeableConcept, or scalar JSON",
+                        )
                 }
             is JsonPrimitive -> {
                 val text = element.contentOrNull
-                    ?: throw IllegalArgumentException("Parameter '$name' must not be null")
-                component.value = StringType(text)
+                when {
+                    text != null && text.isNotBlank() -> component.value = StringType(text)
+                    element.booleanOrNull != null -> component.value = BooleanType(element.booleanOrNull!!)
+                    else -> throw IllegalArgumentException("Parameter '$name' must not be null")
+                }
             }
             else ->
                 throw IllegalArgumentException("Unsupported JSON shape for parameter '$name'")
