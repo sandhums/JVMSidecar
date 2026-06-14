@@ -5,6 +5,7 @@ import com.atrius.sidecar.fhir.newSidecarFhirContext
 import kotlinx.serialization.json.Json
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Condition
+import org.hl7.fhir.r4.model.DiagnosticReport
 import org.hl7.fhir.r4.model.Encounter
 import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.Resource
@@ -64,10 +65,51 @@ class SidecarPlanDefinitionApplierPrefetchTest {
         assertTrue(dataBundle.entry.none { it.resource is Patient })
     }
 
-    /** Mirrors [SidecarPlanDefinitionApplier] prefetch overlay rules (flatten + omit Patient). */
+    @Test
+    fun dedupePrefetch_supports_duplicate_resource_across_prefetch_keys() {
+        val reportId = "86fb6343-97bb-4de6-9681-a12156aff405"
+        val reportA = DiagnosticReport().apply { id = reportId }
+        val reportB = DiagnosticReport().apply { id = reportId }
+        val diagnosticReportsBundle =
+            Bundle().apply {
+                type = Bundle.BundleType.SEARCHSET
+                addEntry().resource = reportA
+            }
+        val diagnosticReport7Bundle =
+            Bundle().apply {
+                type = Bundle.BundleType.SEARCHSET
+                addEntry().resource = reportB
+            }
+        val prefetch =
+            mapOf(
+                "diagnosticReports" to
+                    json.parseToJsonElement(
+                        fhirContext.newJsonParser().encodeResourceToString(diagnosticReportsBundle),
+                    ),
+                "diagnosticreport-7" to
+                    json.parseToJsonElement(
+                        fhirContext.newJsonParser().encodeResourceToString(diagnosticReport7Bundle),
+                    ),
+            )
+
+        val flat =
+            PrefetchRetrieveSupport.dedupeResourcesByTypeAndId(
+                PrefetchRetrieveSupport.flattenPrefetchResources(fhirContext, prefetch),
+            )
+        assertEquals(1, flat.size)
+
+        val dataBundle = applyPrefetchOverlayBundle(flat)
+        assertEquals(1, dataBundle.entry.size)
+
+        val repo = InMemoryFhirRepository(fhirContext, dataBundle)
+        assertNotNull(repo.read(DiagnosticReport::class.java, reportA.idElement, emptyMap()))
+    }
+
+    /** Mirrors [SidecarPlanDefinitionApplier] prefetch overlay rules (flatten + dedupe + omit Patient). */
     private fun applyPrefetchOverlayBundle(flat: List<Any>): Bundle {
+        val deduped = PrefetchRetrieveSupport.dedupeResourcesByTypeAndId(flat)
         val dataBundle = Bundle().apply { type = Bundle.BundleType.COLLECTION }
-        for (resource in flat) {
+        for (resource in deduped) {
             if (resource is Resource && resource !is Patient) {
                 dataBundle.addEntry().resource = resource
             }

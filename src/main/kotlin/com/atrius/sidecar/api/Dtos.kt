@@ -204,3 +204,40 @@ data class ApplyPlanDefinitionResponse(
     /** Extracted RequestGroup for CDS card mapping (same resource referenced by [carePlan].activity). */
     val requestGroup: JsonElement,
 )
+
+/**
+ * Invokes **`ActivityDefinition/$apply`** on the sidecar (CQF Clinical Reasoning).
+ *
+ * Returns a draft request resource (`ServiceRequest`, `MedicationRequest`, `Task`, …) per
+ * [ActivityDefinition.kind], with structural mapping, participant/location resolution,
+ * [dynamicValue] evaluation, and optional StructureMap [transform] applied by CQF.
+ */
+@Serializable
+data class ApplyActivityDefinitionRequest(
+    val activityDefinitionId: String? = null,
+    val activityDefinitionUrl: String? = null,
+    /** FHIR `$apply` **subject** (Patient logical id or reference). */
+    val patientId: String,
+    val encounterId: String? = null,
+    val practitionerId: String? = null,
+    val organizationId: String? = null,
+    val userType: JsonElement? = null,
+    val userLanguage: JsonElement? = null,
+    val userTaskContext: JsonElement? = null,
+    val setting: JsonElement? = null,
+    val settingContext: JsonElement? = null,
+    val hfsBaseUrl: String,
+    val htsBaseUrl: String,
+    val libraryBaseUrl: String? = null,
+    val useServerData: Boolean = false,
+    val prefetch: Map<String, JsonElement>? = null,
+    val parameters: Map<String, JsonElement>? = null,
+    val fhirAuthorization: FhirAuthorizationCredentials? = null,
+)
+
+@Serializable
+data class ApplyActivityDefinitionResponse(
+    val activityDefinitionId: String? = null,
+    /** FHIR `$apply` **return** — transient draft request/event resource (not persisted). */
+    val resource: JsonElement,
+)

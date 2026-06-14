@@ -1,11 +1,13 @@
 package com.atrius.sidecar.server.routes
 
+import com.atrius.sidecar.api.ApplyActivityDefinitionRequest
 import com.atrius.sidecar.api.ApplyPlanDefinitionRequest
 import com.atrius.sidecar.api.EvaluateExpressionRequest
 import com.atrius.sidecar.api.HealthResponse
 import com.atrius.sidecar.cql.SidecarEvaluator
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.SidecarLibraryCacheAdmin
+import com.atrius.sidecar.cr.SidecarActivityDefinitionApplier
 import com.atrius.sidecar.cr.SidecarPlanDefinitionApplier
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
@@ -16,7 +18,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
-fun Routing.sidecarRoutes(evaluator: SidecarEvaluator, planApplier: SidecarPlanDefinitionApplier) {
+fun Routing.sidecarRoutes(
+    evaluator: SidecarEvaluator,
+    planApplier: SidecarPlanDefinitionApplier,
+    activityApplier: SidecarActivityDefinitionApplier,
+) {
     get("/health") { call.respond(HealthResponse(status = "ok")) }
 
     get("/metrics") { call.respond(SidecarMetrics.snapshot()) }
@@ -42,6 +48,13 @@ fun Routing.sidecarRoutes(evaluator: SidecarEvaluator, planApplier: SidecarPlanD
         post {
             val body = call.receive<ApplyPlanDefinitionRequest>()
             call.respond(planApplier.apply(body))
+        }
+    }
+
+    route("/v1/activitydefinition/apply") {
+        post {
+            val body = call.receive<ApplyActivityDefinitionRequest>()
+            call.respond(activityApplier.apply(body))
         }
     }
 }

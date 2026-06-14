@@ -39,7 +39,7 @@ internal object PrefetchRetrieveSupport {
         remote.terminologyProvider = terminology
         remote.setExpandValueSets(true)
 
-        val resources = flattenPrefetchResources(fhirContext, prefetch)
+        val resources = dedupeResourcesByTypeAndId(flattenPrefetchResources(fhirContext, prefetch))
         if (resources.isEmpty()) {
             logger.debug("evaluate/expression: no prefetch resources; using REST retrieve only")
             return remote
@@ -79,6 +79,29 @@ internal object PrefetchRetrieveSupport {
             addResources(parsed, out)
         }
         return out
+    }
+
+    /**
+     * CDS prefetch often repeats the same resource under multiple keys (e.g. chart-wide
+     * `diagnosticReports` and pathway-specific `diagnosticreport-7`). [InMemoryFhirRepository]
+     * indexes by `(resourceType, id)`; keep the last occurrence per key.
+     */
+    internal fun dedupeResourcesByTypeAndId(resources: List<Any>): List<IBaseResource> {
+        val byKey = LinkedHashMap<String, IBaseResource>()
+        for (item in resources) {
+            val resource = item as? IBaseResource ?: continue
+            val key = resourceIdentityKey(resource) ?: continue
+            if (byKey.containsKey(key)) {
+                logger.debug("prefetch: dropping duplicate {}", key)
+            }
+            byKey[key] = resource
+        }
+        return byKey.values.toList()
+    }
+
+    internal fun resourceIdentityKey(resource: IBaseResource): String? {
+        val idPart = resource.idElement?.idPart?.takeIf { it.isNotBlank() } ?: return null
+        return "${resource.fhirType()}/$idPart"
     }
 
     internal fun resolveBaseFhirType(dataType: String): String? = profileRetrieveTargets[dataType]
