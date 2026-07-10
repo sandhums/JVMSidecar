@@ -22,6 +22,7 @@ import org.hl7.fhir.r4.model.CanonicalType
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.Resource
+import org.opencds.cqf.fhir.cql.LibraryEngine
 import org.opencds.cqf.fhir.cr.activitydefinition.ActivityDefinitionProcessor
 import org.opencds.cqf.fhir.utility.monad.Eithers
 import org.opencds.cqf.fhir.utility.repository.RestRepository
@@ -125,6 +126,8 @@ class SidecarActivityDefinitionApplier {
 
         val crSettings = sidecarCrSettings()
         val processor = ActivityDefinitionProcessor(routingRepo, crSettings)
+        // Same as PlanDefinition: avoid CQF ProxyRepository (null invoke(id,$expand)).
+        val libraryEngine = LibraryEngine(routingRepo, crSettings.evaluationSettings)
 
         val subject = normalizeApplyReference(request.patientId, "Patient")!!
         val encounter = normalizeApplyReference(request.encounterId, "Encounter")
@@ -150,11 +153,8 @@ class SidecarActivityDefinitionApplier {
                     setting,
                     settingContext,
                     applyParameters,
-                    request.useServerData,
                     prefetchBundle,
-                    dataRepo,
-                    contentRepo,
-                    terminologyRepo,
+                    libraryEngine,
                 )
             } catch (e: Exception) {
                 throw evaluationFailedException(

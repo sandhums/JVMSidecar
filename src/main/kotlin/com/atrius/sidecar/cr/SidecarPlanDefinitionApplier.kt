@@ -25,6 +25,7 @@ import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.RequestGroup
 import org.hl7.fhir.r4.model.Resource
+import org.opencds.cqf.fhir.cql.LibraryEngine
 import org.opencds.cqf.fhir.cr.plandefinition.PlanDefinitionProcessor
 import org.opencds.cqf.fhir.utility.monad.Eithers
 import org.opencds.cqf.fhir.utility.repository.RestRepository
@@ -125,6 +126,11 @@ class SidecarPlanDefinitionApplier {
 
         val crSettings = sidecarCrSettings()
         val processor = PlanDefinitionProcessor(routingRepo, crSettings)
+        // Use LibraryEngine(routingRepo) — do NOT pass data/content/terminology RestRepositories
+        // into the 3-repo apply overload. That path wraps them in CQF ProxyRepository, whose
+        // invoke(id, "$expand", …) returns null and breaks ValueSet membership when prefetch
+        // disables server-side :in searches.
+        val libraryEngine = LibraryEngine(routingRepo, crSettings.evaluationSettings)
 
         val subject = normalizeApplyReference(request.patientId, "Patient")!!
         val encounter = normalizeApplyReference(request.encounterId, "Encounter")
@@ -150,12 +156,9 @@ class SidecarPlanDefinitionApplier {
                     setting,
                     settingContext,
                     applyParameters,
-                    request.useServerData,
                     prefetchBundle,
                     null,
-                    dataRepo,
-                    contentRepo,
-                    terminologyRepo,
+                    libraryEngine,
                 )
             } catch (e: Exception) {
                 throw evaluationFailedException(
