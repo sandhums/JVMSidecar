@@ -1,16 +1,11 @@
 package com.atrius.sidecar.cr
 
 import ca.uhn.fhir.context.FhirContext
-import ca.uhn.fhir.rest.api.EncodingEnum
-import com.atrius.sidecar.fhir.newSidecarFhirContext
 import com.atrius.sidecar.fhir.sidecarCrSettings
-import ca.uhn.fhir.rest.client.api.IGenericClient
-import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor
-import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor
-import ca.uhn.fhir.rest.client.interceptor.ThreadLocalCapturingInterceptor
 import com.atrius.sidecar.api.ApplyPlanDefinitionRequest
 import com.atrius.sidecar.api.ApplyPlanDefinitionResponse
 import com.atrius.sidecar.cql.PrefetchRetrieveSupport
+import com.atrius.sidecar.cql.SidecarFhirClients
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.evaluationFailedException
 import kotlinx.serialization.json.JsonElement
@@ -29,7 +24,6 @@ import org.opencds.cqf.fhir.cql.LibraryEngine
 import org.opencds.cqf.fhir.cr.plandefinition.PlanDefinitionProcessor
 import org.opencds.cqf.fhir.utility.monad.Eithers
 import org.opencds.cqf.fhir.utility.repository.RestRepository
-import org.slf4j.LoggerFactory
 
 /**
  * Executes FHIR R4 **`PlanDefinition/$apply`** via [PlanDefinitionProcessor] from
@@ -72,25 +66,20 @@ class SidecarPlanDefinitionApplier {
     }
 
     private fun applyInternal(request: ApplyPlanDefinitionRequest): ApplyPlanDefinitionResponse {
-        val fhirHttpCapture = ThreadLocalCapturingInterceptor()
-        val fhirContext = newSidecarFhirContext()
-        val applyParameters = buildApplyParameters(fhirContext, request.parameters)
-
         val libraryBase = trimBase(
             request.libraryBaseUrl?.takeIf { it.isNotBlank() } ?: request.hfsBaseUrl,
         )
         val clinicalBase = trimBase(request.hfsBaseUrl)
         val terminologyBase = trimBase(request.htsBaseUrl)
 
-        val contentClient =
-            fhirContext.newRestfulGenericClient(libraryBase).configureSidecarFhirClient(fhirHttpCapture)
+        val fhirHttpCapture = SidecarFhirClients.captureForBase(clinicalBase)
+        val fhirContext = SidecarFhirClients.fhirContext()
+        val applyParameters = buildApplyParameters(fhirContext, request.parameters)
+
+        val contentClient = SidecarFhirClients.client(libraryBase)
         val clinicalClient =
-            fhirContext
-                .newRestfulGenericClient(clinicalBase)
-                .configureSidecarFhirClient(fhirHttpCapture)
-                .configureClinicalBearerAuth(request.fhirAuthorization?.accessToken)
-        val terminologyClient =
-            fhirContext.newRestfulGenericClient(terminologyBase).configureSidecarFhirClient(fhirHttpCapture)
+            SidecarFhirClients.client(clinicalBase, request.fhirAuthorization?.accessToken)
+        val terminologyClient = SidecarFhirClients.client(terminologyBase)
 
         val prefetchBundle =
             if (request.useServerData) {
@@ -108,6 +97,8 @@ class SidecarPlanDefinitionApplier {
                 data = dataRepo,
                 content = contentRepo,
                 terminology = terminologyRepo,
+                contentBaseUrl = libraryBase,
+                terminologyBaseUrl = terminologyBase,
             )
 
         val planDefinitionRef: org.opencds.cqf.fhir.utility.monad.Either3<
@@ -279,36 +270,4 @@ internal fun extractRequestGroup(result: IBaseResource?): RequestGroup {
     error(
         "PlanDefinition/\$apply returned ${result.fhirType()}; expected RequestGroup or CarePlan containing RequestGroup",
     )
-}
-
-private val fhirHttpTraceLogger = LoggerFactory.getLogger("com.atrius.sidecar.fhir.http")
-
-private fun isFhirHttpTraceEnabled(): Boolean =
-    java.lang.Boolean.getBoolean("sidecar.fhir.http.log") ||
-        System.getenv("SIDECAR_FHIR_HTTP_LOG")?.equals("true", ignoreCase = true) == true
-
-private fun IGenericClient.configureClinicalBearerAuth(accessToken: String?): IGenericClient {
-    val token = accessToken?.trim()?.takeIf { it.isNotEmpty() }
-    if (token != null) {
-        registerInterceptor(BearerTokenAuthInterceptor(token))
-    }
-    return this
-}
-
-private fun IGenericClient.configureSidecarFhirClient(capture: ThreadLocalCapturingInterceptor?): IGenericClient {
-    capture?.let { registerInterceptor(it) }
-    encoding = EncodingEnum.JSON
-    if (!isFhirHttpTraceEnabled()) return this
-    registerInterceptor(
-        LoggingInterceptor(false).apply {
-            setLogger(fhirHttpTraceLogger)
-            setLogRequestSummary(true)
-            setLogResponseSummary(true)
-            setLogRequestHeaders(true)
-            setLogResponseHeaders(false)
-            setLogRequestBody(false)
-            setLogResponseBody(false)
-        },
-    )
-    return this
 }

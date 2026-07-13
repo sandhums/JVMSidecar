@@ -1,12 +1,13 @@
 package com.atrius.sidecar.cql
 
 import ca.uhn.fhir.context.FhirContext
-import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum
 import ca.uhn.fhir.rest.client.api.IGenericClient
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor
 import ca.uhn.fhir.rest.client.interceptor.ThreadLocalCapturingInterceptor
+import ca.uhn.fhir.rest.api.EncodingEnum
+import com.atrius.sidecar.fhir.newSidecarFhirContext
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 internal object SidecarFhirClients {
     private val context: FhirContext =
-        FhirContext.forR4().also { ctx ->
+        newSidecarFhirContext().also { ctx ->
             ctx.restfulClientFactory.serverValidationMode = ServerValidationModeEnum.ONCE
         }
 

@@ -18,20 +18,62 @@ Libraries using `using AtriusIn version '0.1.0'` require the **AtriusIn modelinf
 
 Source: `AtriusInModelSupport.kt`, `ElmLibraryHydration.kt`.
 
-### Caching (warm evaluate latency)
+### Caching — evaluate (`POST /v1/evaluate/expression`)
 
 | Mechanism | Scope | Effect |
 |-----------|-------|--------|
 | **`EvaluationLibraryCache`** | Process | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, **contentIdentity**, includes)` where **contentIdentity** is `Library.meta.versionId` or an ELM SHA-256 fallback |
 | **`FhirLibraryResourceCaches`** | Process | Reuses KR `Library` FHIR resources per KR base URL keyed by logical id/version **and** content identity |
+| **`ValueSetExpansionCache`** / **`CachedR4FhirTerminologyProvider`** | Process | Reuses HTS `$expand` results per terminology base |
 | **`SidecarFhirClients`** | Process | Single `FhirContext`; pooled clients per base URL; `GET /metadata` once per base |
 
 Canonical Atrius library URLs (`https://atrius.in/fhir/r4/atrius-in/…`) are normalized to KR logical ids **before** any outbound HTTP to the public site (`LibraryIdentifierNormalization.kt`, `KrCanonicalLibrarySourceProvider.kt`).
 
-**Same-version KR re-import** (new ELM, same `Library.version`) auto-invalidates caches via `meta.versionId` / ELM fingerprint — manual `POST /v1/admin/cache/libraries/clear` is only needed if you suspect stale state without a KR `versionId` bump. **Restart the sidecar** still clears all process caches.
+Typical CMS165 **evaluate** latency: **~2.7s cold**, **~160ms warm**.
 
-Typical CMS165 latency after these changes: **~2.7s cold**, **~160ms warm**.
+### Caching — PlanDefinition `$apply` (`POST /v1/plandefinition/apply`)
 
+CDS Hooks pathway services (e.g. HF admission) call **`$apply`** via CQF `PlanDefinitionProcessor`, not the evaluate/expression path. Early apply runs were **~10s**, then **~3.5s → ~1.3s** after KR/HTTP caches, with warm still stuck until CQL compile caches were shared.
+
+**Root causes**
+
+1. **Per-request FHIR clients / context** — each `$apply` built a new HAPI client stack → repeated `GET /metadata` and TCP setup.
+2. **Uncached KR + HTS I/O inside CQF** — `PlanDefinition` / `ActivityDefinition` / `Library` reads and ValueSet `$expand` hit the network on every apply (evaluate already had caches; apply did not).
+3. **Per-request `EvaluationSettings`** — `EvaluationSettings.getDefault()` returns a **new** instance with empty `libraryCache` / `modelCache` / `valueSetCache`. Calling it on every `$apply` forced full CQL→ELM recompile (~1s+) even when KR content was warm.
+
+**Fixes applied**
+
+| Mechanism | File(s) | Effect |
+|-----------|---------|--------|
+| Shared FHIR clients + validation context | `SidecarFhirClients.kt`, `SidecarFhirContext.kt` | One `FhirContext`; pooled clients; metadata once per base |
+| KR content cache for apply routing | `SidecarKrContentCache` in `SidecarApplyCaches.kt`, used by `SidecarRoutingRepository.kt` | Cache PlanDefinition / ActivityDefinition / Library reads by `(contentBase, type, id)` |
+| Expand cache for apply terminology | `SidecarExpandCache` in `SidecarApplyCaches.kt` | Cache `$expand` MethodOutcome / Parameters by HTS base + ValueSet id |
+| **Process-wide `CrSettings` / `EvaluationSettings`** | `sidecarCrSettings()` in `SidecarFhirContext.kt` | Shared CQF compile caches across all `$apply` (and activity apply) calls — this is what dropped warm apply from ~1.3s to ~120ms |
+| AtriusIn namespace on CR settings | same | Registers FHIR / QICore / AtriusIn namespaces once |
+
+**Measured HF admission CDS** (UI timings; apply dominates cds-server):
+
+| Call | Total | Apply |
+|------|-------|-------|
+| Cold (first after sidecar start / cache clear) | ~1.3–3.5s | ~1.3–3.5s |
+| Warm (retry) | **~128ms** | **~121ms** |
+
+Prefetch on the BFF path is already lean (~4–5ms / 4 keys) and is not the bottleneck once apply caches are warm.
+
+### Cache invalidation
+
+**Same-version KR re-import** (new ELM, same `Library.version`) auto-invalidates evaluate library caches via `meta.versionId` / ELM fingerprint.
+
+Manual flush (clears **evaluate and apply** process caches):
+
+```bash
+curl -s -X POST http://127.0.0.1:8088/v1/admin/cache/libraries/clear \
+  -H "Authorization: Bearer ${SIDECAR_ADMIN_TOKEN:-}"
+```
+
+Buckets cleared: `evaluationLibraryStacks`, `fhirLibraryResources`, `terminologyExpansions`, `krContentResources`, `applyExpandResults`, `cqfEvaluationSettingsCaches`.
+
+**Restart the sidecar** still clears everything. After a restart, expect one cold compile before warm latency returns.
 ---
 
 ## 1. What “evaluation” means here
@@ -165,6 +207,11 @@ If you want to browse Kotlin without changing anything:
 | HTTP routes | [`Routing.kt`](../src/main/kotlin/com/atrius/sidecar/server/routes/Routing.kt) |
 | Request/response JSON models | [`Dtos.kt`](../src/main/kotlin/com/atrius/sidecar/api/Dtos.kt) |
 | End-to-end evaluation | [`SidecarEvaluator.kt`](../src/main/kotlin/com/atrius/sidecar/cql/SidecarEvaluator.kt) |
+| PlanDefinition / ActivityDefinition `$apply` | [`SidecarPlanDefinitionApplier.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarPlanDefinitionApplier.kt), [`SidecarActivityDefinitionApplier.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarActivityDefinitionApplier.kt) |
+| Apply KR/HTS routing + caches | [`SidecarRoutingRepository.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarRoutingRepository.kt), [`SidecarApplyCaches.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarApplyCaches.kt) |
+| Shared CR / CQF compile settings | [`SidecarFhirContext.kt`](../src/main/kotlin/com/atrius/sidecar/fhir/SidecarFhirContext.kt) (`sidecarCrSettings`) |
+| Cache admin clear | [`SidecarLibraryCacheAdmin.kt`](../src/main/kotlin/com/atrius/sidecar/cql/SidecarLibraryCacheAdmin.kt) |
+| Shared FHIR clients | [`SidecarFhirClients.kt`](../src/main/kotlin/com/atrius/sidecar/cql/SidecarFhirClients.kt) |
 | ELM from POST + classpath + FHIR Library | [`ElmLibrarySources.kt`](../src/main/kotlin/com/atrius/sidecar/cql/ElmLibrarySources.kt), [`FhirLibraryElmLoader.kt`](../src/main/kotlin/com/atrius/sidecar/cql/FhirLibraryElmLoader.kt), [`FhirElmLibrarySourceProvider.kt`](../src/main/kotlin/com/atrius/sidecar/cql/FhirElmLibrarySourceProvider.kt) |
 | ELM parsing / hydration | [`ElmLibraryParsing.kt`](../src/main/kotlin/com/atrius/sidecar/cql/ElmLibraryParsing.kt), [`ElmLibraryHydration.kt`](../src/main/kotlin/com/atrius/sidecar/cql/ElmLibraryHydration.kt) |
 

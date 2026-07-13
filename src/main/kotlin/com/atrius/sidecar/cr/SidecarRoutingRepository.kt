@@ -25,13 +25,29 @@ internal class SidecarRoutingRepository(
     private val data: IRepository,
     private val content: IRepository,
     private val terminology: IRepository,
+    /** KR base URL — used as content-cache namespace (empty disables content caching). */
+    private val contentBaseUrl: String = "",
+    /** HTS base URL — used as expand-cache namespace (empty disables expand caching). */
+    private val terminologyBaseUrl: String = "",
 ) : IRepository {
 
     override fun <T : IBaseResource, I : IIdType> read(
         resourceType: Class<T>,
         id: I,
         headers: MutableMap<String, String>?,
-    ): T = repoForType(resourceType.simpleName).read(resourceType, id, headers)
+    ): T {
+        val typeName = resourceType.simpleName
+        if (contentBaseUrl.isNotBlank() && typeName in CONTENT_TYPES) {
+            val idPart = id.idPart?.takeIf { it.isNotBlank() }
+            if (idPart != null) {
+                val key = SidecarKrContentCache.cacheKey(contentBaseUrl, typeName, idPart)
+                return SidecarKrContentCache.getOrLoad(key) {
+                    content.read(resourceType, id, headers)
+                }
+            }
+        }
+        return repoForType(typeName).read(resourceType, id, headers)
+    }
 
     override fun <T : IBaseResource> create(
         resource: T,
@@ -104,7 +120,31 @@ internal class SidecarRoutingRepository(
         parameters: P?,
         returnType: Class<R>,
         headers: MutableMap<String, String>?,
-    ): R = repoForType(resourceType.simpleName).invoke(resourceType, name, parametersOrEmpty(parameters), returnType, headers)
+    ): R {
+        if (terminologyBaseUrl.isNotBlank() &&
+            resourceType.simpleName == "ValueSet" &&
+            isExpandOp(name)
+        ) {
+            val key =
+                SidecarExpandCache.cacheKey(
+                    terminologyBaseUrl,
+                    "ValueSet",
+                    expandUrlCacheKey(parameters),
+                    name,
+                )
+            return SidecarExpandCache.getOrLoad(key) {
+                terminology.invoke(
+                    resourceType,
+                    name,
+                    parametersOrEmpty(parameters),
+                    returnType,
+                    headers,
+                )
+            }
+        }
+        return repoForType(resourceType.simpleName)
+            .invoke(resourceType, name, parametersOrEmpty(parameters), returnType, headers)
+    }
 
     override fun <P : IBaseParameters, T : IBaseResource> invoke(
         resourceType: Class<T>,
@@ -120,7 +160,21 @@ internal class SidecarRoutingRepository(
         parameters: P?,
         returnType: Class<R>,
         headers: MutableMap<String, String>?,
-    ): R = repoForId(id).invoke(id, name, parametersOrEmpty(parameters), returnType, headers)
+    ): R {
+        if (terminologyBaseUrl.isNotBlank() && isExpandOp(name)) {
+            val key =
+                SidecarExpandCache.cacheKey(
+                    terminologyBaseUrl,
+                    id.resourceType,
+                    id.idPart,
+                    name,
+                )
+            return SidecarExpandCache.getOrLoad(key) {
+                repoForId(id).invoke(id, name, parametersOrEmpty(parameters), returnType, headers)
+            }
+        }
+        return repoForId(id).invoke(id, name, parametersOrEmpty(parameters), returnType, headers)
+    }
 
     /** CQF ValueSet expansion calls `invoke(id, "$expand", null)` — normalize to empty Parameters for REST. */
     override fun <P : IBaseParameters, I : IIdType> invoke(
@@ -128,7 +182,21 @@ internal class SidecarRoutingRepository(
         name: String,
         parameters: P?,
         headers: MutableMap<String, String>?,
-    ): MethodOutcome = repoForId(id).invoke(id, name, parametersOrEmpty(parameters), headers)
+    ): MethodOutcome {
+        if (terminologyBaseUrl.isNotBlank() && isExpandOp(name)) {
+            val key =
+                SidecarExpandCache.cacheKey(
+                    terminologyBaseUrl,
+                    id.resourceType,
+                    id.idPart,
+                    "$name:outcome",
+                )
+            return SidecarExpandCache.getOrLoad(key) {
+                repoForId(id).invoke(id, name, parametersOrEmpty(parameters), headers)
+            }
+        }
+        return repoForId(id).invoke(id, name, parametersOrEmpty(parameters), headers)
+    }
 
     override fun <B : IBaseBundle, P : IBaseParameters> history(
         parameters: P,
@@ -176,5 +244,20 @@ internal class SidecarRoutingRepository(
                 "ActivityDefinition",
                 "Questionnaire",
             )
+
+        private fun isExpandOp(name: String): Boolean =
+            name == "\$expand" || name.equals("expand", ignoreCase = true)
+
+        private fun expandUrlCacheKey(parameters: IBaseParameters?): String {
+            if (parameters !is Parameters) return "noparams"
+            val url =
+                parameters.parameter
+                    ?.firstOrNull { it.name == "url" }
+                    ?.value
+                    ?.primitiveValue()
+                    ?.trim()
+                    .orEmpty()
+            return url.ifBlank { "noparams" }
+        }
     }
 }

@@ -27,11 +27,30 @@ fun buildSidecarValidationSupport(fhirContext: FhirContext): IValidationSupport 
         InMemoryTerminologyServerValidationSupport(fhirContext),
     )
 
-/** CR settings with QI-Core / FHIR namespaces registered for eCQM libraries. */
-fun sidecarCrSettings(): CrSettings {
-    val evaluationSettings =
-        EvaluationSettings.getDefault()
-            .addRegisteredNamespace("FHIR", "http://hl7.org/fhir")
-            .addRegisteredNamespace("QICore", "http://hl7.org/fhir/us/qicore")
-    return CrSettings.getDefault().withEvaluationSettings(evaluationSettings)
+/**
+ * Process-wide CR settings. [EvaluationSettings] holds ConcurrentHashMap caches for compiled
+ * CQL libraries, models, and ValueSets — recreating settings on every `$apply` (the old
+ * `getDefault()` pattern) forced full ELM recompile (~seconds) on every request.
+ */
+private val SHARED_EVALUATION_SETTINGS: EvaluationSettings =
+    EvaluationSettings.getDefault()
+        .addRegisteredNamespace("FHIR", "http://hl7.org/fhir")
+        .addRegisteredNamespace("QICore", "http://hl7.org/fhir/us/qicore")
+        .addRegisteredNamespace("AtriusIn", "https://atrius.in/fhir/r4/atrius-in")
+
+private val SHARED_CR_SETTINGS: CrSettings =
+    CrSettings.getDefault().withEvaluationSettings(SHARED_EVALUATION_SETTINGS)
+
+/** CR settings with QI-Core / FHIR / AtriusIn namespaces and shared CQL compile caches. */
+fun sidecarCrSettings(): CrSettings = SHARED_CR_SETTINGS
+
+/** Clear CQF EvaluationSettings compile caches (library / model / valueset). */
+fun clearSidecarEvaluationCaches(): Int {
+    val libs = SHARED_EVALUATION_SETTINGS.libraryCache.size
+    val models = SHARED_EVALUATION_SETTINGS.modelCache.size
+    val vs = SHARED_EVALUATION_SETTINGS.valueSetCache.size
+    SHARED_EVALUATION_SETTINGS.libraryCache.clear()
+    SHARED_EVALUATION_SETTINGS.modelCache.clear()
+    SHARED_EVALUATION_SETTINGS.valueSetCache.clear()
+    return libs + models + vs
 }
