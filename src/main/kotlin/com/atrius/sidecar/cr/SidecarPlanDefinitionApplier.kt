@@ -161,6 +161,12 @@ class SidecarPlanDefinitionApplier {
             }
 
         val (carePlan, requestGroup) = normalizeApplyResult(result, subject)
+        val planCanonical =
+            request.planDefinitionUrl?.trim()?.takeIf { it.isNotBlank() }
+                ?: request.planDefinitionId?.trim()?.takeIf { it.isNotBlank() }?.let {
+                    "https://atrius.in/fhir/r4/atrius-in/PlanDefinition/$it"
+                }
+        enrichCarePlanMetadata(carePlan, requestGroup, planCanonical)
 
         val parser = fhirContext.newJsonParser()
         val carePlanElement = json.parseToJsonElement(parser.encodeResourceToString(carePlan))
@@ -221,6 +227,57 @@ internal fun normalizeApplyResult(result: IBaseResource?, subjectReference: Stri
                 "PlanDefinition/\$apply returned ${result.fhirType()}; expected CarePlan or RequestGroup",
             )
     }
+}
+
+/**
+ * CQF often leaves CarePlan.title empty, intent=proposal, and sometimes omits
+ * instantiatesCanonical (especially when wrapping a bare RequestGroup). Fill title from the
+ * RequestGroup root action and ensure instantiatesCanonical points at the PlanDefinition so
+ * chart UIs can match pathway CarePlans.
+ *
+ * Note: FHIR R4 [RequestGroup] has no `title` element (R5+); only CarePlan and action titles apply.
+ */
+internal fun enrichCarePlanMetadata(
+    carePlan: CarePlan,
+    requestGroup: RequestGroup,
+    planDefinitionCanonical: String? = null,
+) {
+    if (carePlan.instantiatesCanonical.isNullOrEmpty() && !planDefinitionCanonical.isNullOrBlank()) {
+        carePlan.addInstantiatesCanonical(planDefinitionCanonical)
+    }
+
+    if (!carePlan.title.isNullOrBlank()) return
+
+    val actionTitle = requestGroup.actionFirstRepOrNull()?.title?.takeIf { it.isNotBlank() }
+    val fromCanonical =
+        carePlan.instantiatesCanonical
+            ?.firstOrNull()
+            ?.value
+            ?.let { humanizePlanDefinitionCanonical(it) }
+    val derived = actionTitle ?: fromCanonical
+    if (!derived.isNullOrBlank()) {
+        carePlan.title = derived
+    }
+}
+
+private fun RequestGroup.actionFirstRepOrNull(): RequestGroup.RequestGroupActionComponent? =
+    action?.firstOrNull()
+
+/** `…/PlanDefinition/hf-admission-protocol|0.1.0` → `Hf admission protocol` (last resort). */
+internal fun humanizePlanDefinitionCanonical(canonical: String): String? {
+    val idPart =
+        canonical
+            .substringAfterLast('/')
+            .substringBefore('|')
+            .trim()
+            .takeIf { it.isNotEmpty() }
+            ?: return null
+    return idPart.replace('-', ' ').replace('_', ' ')
+        .split(' ')
+        .filter { it.isNotEmpty() }
+        .joinToString(" ") { word ->
+            word.replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase() else c.toString() }
+        }
 }
 
 /** Wrap a bare [RequestGroup] in a minimal [CarePlan] per FHIR `$apply` return shape. */
