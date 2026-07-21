@@ -13,9 +13,9 @@ Start there for **three logical FHIR bases** (`hfsBaseUrl`, `htsBaseUrl`, option
 
 ## Three FHIR URLs
 
-- **`hfsBaseUrl`** — clinical data (`Patient`, …).
+- **`hfsBaseUrl`** — clinical data (`Patient`, …) only.
 - **`htsBaseUrl`** — terminology (`ValueSet/$expand`, …).
-- **`libraryBaseUrl`** — optional; knowledge **`Library`** fetch (primary when **`elm`** is omitted, or missing **`include`**s after classpath). Omit it to default to **`hfsBaseUrl`** until you split artifact FHIR.
+- **`libraryBaseUrl`** — knowledge repository (KR) for **primary** `Library` and all CQL **`include`** libraries. **Required** when `resolveLibraryArtifactsFromFhir` is true, and for `$apply`. Includes do **not** fall back to `hfsBaseUrl` (no bridge `/Library` routing needed).
 
 ## Quick start
 

@@ -4,17 +4,26 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.model.api.IQueryParameterType
 import ca.uhn.fhir.repository.IRepository
 import ca.uhn.fhir.rest.api.MethodOutcome
-import com.google.common.collect.Multimap
+import ca.uhn.fhir.rest.param.StringParam
 import ca.uhn.fhir.util.BundleUtil
+import com.atrius.sidecar.cql.normalizeLibraryIdentifier
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.Multimap
+import org.hl7.elm.r1.VersionedIdentifier
 import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.instance.model.api.IBaseConformance
 import org.hl7.fhir.instance.model.api.IBaseParameters
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.instance.model.api.IIdType
+import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Parameters
 
 /**
  * Routes FHIR repository calls across clinical (data), KR (content), and HTS (terminology) bases.
+ *
+ * **Library / PlanDefinition / ActivityDefinition** always go to the **content** (KR) repository —
+ * including CQL `include` resolution via CQF [org.opencds.cqf.fhir.cql.cql2elm.content.RepositoryFhirLibrarySourceProvider].
+ * Clinical [data] is never used for knowledge artifacts.
  *
  * CQF [org.opencds.cqf.fhir.utility.repository.ProxyRepository] returns null from
  * [invoke] overloads that take an [IIdType] (e.g. `ValueSet/{id}/$expand`). PlanDefinition `$apply`
@@ -37,16 +46,18 @@ internal class SidecarRoutingRepository(
         headers: MutableMap<String, String>?,
     ): T {
         val typeName = resourceType.simpleName
+        @Suppress("UNCHECKED_CAST")
+        val effectiveId = (if (typeName == "Library") normalizeLibraryReadId(id) else id) as I
         if (contentBaseUrl.isNotBlank() && typeName in CONTENT_TYPES) {
-            val idPart = id.idPart?.takeIf { it.isNotBlank() }
+            val idPart = effectiveId.idPart?.takeIf { it.isNotBlank() }
             if (idPart != null) {
                 val key = SidecarKrContentCache.cacheKey(contentBaseUrl, typeName, idPart)
                 return SidecarKrContentCache.getOrLoad(key) {
-                    content.read(resourceType, id, headers)
+                    content.read(resourceType, effectiveId, headers)
                 }
             }
         }
-        return repoForType(typeName).read(resourceType, id, headers)
+        return repoForType(typeName).read(resourceType, effectiveId, headers)
     }
 
     override fun <T : IBaseResource> create(
@@ -76,7 +87,16 @@ internal class SidecarRoutingRepository(
         resourceType: Class<T>,
         searchParameters: Multimap<String, MutableList<IQueryParameterType>>?,
         headers: MutableMap<String, String>?,
-    ): B = repoForType(resourceType.simpleName).search(bundleType, resourceType, searchParameters, headers)
+    ): B {
+        val typeName = resourceType.simpleName
+        val params =
+            if (typeName == "Library") {
+                normalizeLibraryNameSearchParams(searchParameters)
+            } else {
+                searchParameters
+            }
+        return repoForType(typeName).search(bundleType, resourceType, params, headers)
+    }
 
     override fun <B : IBaseBundle> link(
         bundleType: Class<B>,
@@ -258,6 +278,57 @@ internal class SidecarRoutingRepository(
                     ?.trim()
                     .orEmpty()
             return url.ifBlank { "noparams" }
+        }
+
+        /** Map canonical / URL library ids to KR logical ids before content read. */
+        internal fun normalizeLibraryReadId(id: IIdType): IIdType {
+            val part = id.idPart?.takeIf { it.isNotBlank() } ?: return id
+            val logical =
+                normalizeLibraryIdentifier(
+                    VersionedIdentifier().apply { this.id = part },
+                ).id ?: return id
+            if (logical == part) return id
+            return IdType("Library", logical)
+        }
+
+        /**
+         * CQF [RepositoryFhirLibrarySourceProvider] searches `Library?name={include.path}`.
+         * When include.path is an Atrius canonical URL, rewrite to the KR logical name.
+         */
+        internal fun normalizeLibraryNameSearchParams(
+            searchParameters: Multimap<String, MutableList<IQueryParameterType>>?,
+        ): Multimap<String, MutableList<IQueryParameterType>>? {
+            if (searchParameters == null) return null
+            var changed = false
+            val out = ArrayListMultimap.create<String, MutableList<IQueryParameterType>>()
+            for (key in searchParameters.keySet()) {
+                for (orList in searchParameters.get(key)) {
+                    if (key != "name") {
+                        out.put(key, orList)
+                        continue
+                    }
+                    val rewritten = ArrayList<IQueryParameterType>(orList.size)
+                    for (param in orList) {
+                        if (param is StringParam) {
+                            val raw = param.value.orEmpty()
+                            val logical =
+                                normalizeLibraryIdentifier(
+                                    VersionedIdentifier().apply { id = raw },
+                                ).id ?: raw
+                            if (logical != raw) {
+                                changed = true
+                                rewritten.add(StringParam(logical))
+                            } else {
+                                rewritten.add(param)
+                            }
+                        } else {
+                            rewritten.add(param)
+                        }
+                    }
+                    out.put(key, rewritten)
+                }
+            }
+            return if (changed) out else searchParameters
         }
     }
 }

@@ -42,8 +42,9 @@ class SidecarEvaluator {
 
         val clinicalBase = trimBase(request.hfsBaseUrl)
         val terminologyBase = trimBase(request.htsBaseUrl)
-        val libraryBase = effectiveLibraryBase(request)
-        clearFhirCaptures(clinicalBase, terminologyBase, libraryBase)
+        // Capture clearing: use explicit KR base when set; never invent a library base from clinical.
+        val libraryBase = explicitLibraryBase(request)
+        clearFhirCaptures(clinicalBase, terminologyBase, *(libraryBase?.let { arrayOf(it) } ?: emptyArray()))
         val fhirHttpCapture = SidecarFhirClients.captureForBase(clinicalBase)
         val krFetchBaseline = SidecarMetrics.currentKrLibraryFetches()
         val startedNs = System.nanoTime()
@@ -59,6 +60,9 @@ class SidecarEvaluator {
             val (prepared, cacheHit) =
                 try {
                     resolvePreparedStackWithMetrics(request, inlineElm)
+                } catch (e: IllegalArgumentException) {
+                    // Config / contract errors (e.g. missing libraryBaseUrl) — do not wrap as evaluation_failed.
+                    throw e
                 } catch (e: Exception) {
                     throw evaluationFailedException(
                         "ELM resolution failed (missing include payloads, classpath ELM, FHIR Library.content ELM, or incompatible translator metadata?).",
@@ -84,7 +88,7 @@ class SidecarEvaluator {
                 krFetchesThisRequest = krFetches,
                 error = error,
             )
-            clearFhirCaptures(clinicalBase, terminologyBase, libraryBase)
+            clearFhirCaptures(clinicalBase, terminologyBase, *(libraryBase?.let { arrayOf(it) } ?: emptyArray()))
         }
     }
 
@@ -187,7 +191,7 @@ class SidecarEvaluator {
             return buildPreparedLibraryStackFromInlineElm(request, inlineElm, request.elmFormat) to null
         }
 
-        val libraryBase = effectiveLibraryBase(request)
+        val libraryBase = requireLibraryBaseForFhirResolution(request)
         val libraryClient = SidecarFhirClients.client(libraryBase)
         val libraryLoader = FhirLibraryElmLoader(libraryClient, libraryBase)
         val primaryResource =

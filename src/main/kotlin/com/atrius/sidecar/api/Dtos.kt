@@ -104,13 +104,14 @@ data class EvaluateExpressionRequest(
      */
     val htsBaseUrl: String,
     /**
-     * Knowledge-artifact FHIR base for **`Library`** reads when resolving missing includes (`GET Library/{id}` or
-     * `Library?name=…&version=…`). **Null or blank** means use [hfsBaseUrl] (common until you split artifact FHIR).
+     * Knowledge-artifact FHIR base (KR) for **primary** and CQL **`include`** `Library` reads
+     * (`GET Library/{id}` or `Library?name=…&version=…`). **Required** when
+     * [resolveLibraryArtifactsFromFhir] is true — includes do **not** fall back to [hfsBaseUrl].
      */
     val libraryBaseUrl: String? = null,
     /**
      * When true, fetch FHIR **`Library`** ELM for missing **`include`** targets and (when [elm] is null or blank) for the **primary** library.
-     * Precedence: inline body → classpath → FHIR [libraryBaseUrl]. Set false to forbid outbound `Library` fetches (requires non-blank [elm]).
+     * Precedence: inline body → classpath → FHIR [libraryBaseUrl] (KR). Set false to forbid outbound `Library` fetches (requires non-blank [elm]).
      */
     val resolveLibraryArtifactsFromFhir: Boolean = true,
     /**
@@ -185,6 +186,10 @@ data class ApplyPlanDefinitionRequest(
     val settingContext: JsonElement? = null,
     val hfsBaseUrl: String,
     val htsBaseUrl: String,
+    /**
+     * KR base for PlanDefinition / Library / CQL includes. **Required** — knowledge artifacts never
+     * load from [hfsBaseUrl].
+     */
     val libraryBaseUrl: String? = null,
     /** When true, clinical data comes from server REST only (no prefetch overlay). */
     val useServerData: Boolean = false,
@@ -228,6 +233,7 @@ data class ApplyActivityDefinitionRequest(
     val settingContext: JsonElement? = null,
     val hfsBaseUrl: String,
     val htsBaseUrl: String,
+    /** KR content base — **required** (same contract as [ApplyPlanDefinitionRequest.libraryBaseUrl]). */
     val libraryBaseUrl: String? = null,
     val useServerData: Boolean = false,
     val prefetch: Map<String, JsonElement>? = null,

@@ -82,7 +82,7 @@ When you **POST** `/v1/evaluate/expression`, the sidecar:
 
 1. **Loads ELM libraries** from these sources (details below):
    - **Primary:** non-blank **`elm`** in the JSON body (**always wins** when present), **or** FHIR **`Library.content`** when **`elm`** is omitted and **`resolveLibraryArtifactsFromFhir`** is **true** (**`libraryId`** / **`libraryVersion`** identify the resource on **`libraryBaseUrl`** or **`hfsBaseUrl`**).
-   - **`include` dependencies:** **`includedLibraries`** → classpath **`/elm-libraries/`** → FHIR **`Library`** (same flag and base URL).
+   - **`include` dependencies:** **`includedLibraries`** → classpath **`/elm-libraries/`** → FHIR **`Library`** on **`libraryBaseUrl`** (KR — never clinical **`hfsBaseUrl`**).
 2. **Compiles / resolves** those libraries with CQ Framework’s **`LibraryManager`** (this turns ELM into something the engine can run).
 3. **Connects to your FHIR servers** for **runtime data**:
    - **Clinical base URL (`hfsBaseUrl`)** — e.g. read `Patient/{id}`, search `Condition`, etc., when the expression asks for FHIR data.
@@ -97,7 +97,7 @@ The **result** of the expression (string, number, list, etc.) is returned as JSO
 | Concept | What it is | Where this sidecar gets it |
 |--------|------------|-----------------------------|
 | **CQL / ELM library** | A **knowledge artifact**: translated logic (ELM XML or JSON), possibly with `include` references to other libraries (e.g. **FHIRHelpers**). | Inline **`elm`** (optional when primary comes from FHIR), **`includedLibraries`**, classpath **`elm-libraries`**, and FHIR **`Library`** on **`libraryBaseUrl`**. See precedence in §1 and §3. |
-| **FHIR `Library` resource** | A **FHIR REST resource** that may attach **ELM** (`application/elm+xml`, `application/elm+json`) or **`text/cql`** in **`content[]`**. | When **`resolveLibraryArtifactsFromFhir`** is **true**, the sidecar can load the **primary** from FHIR when **`elm`** is omitted, and load **`include`** targets after classpath misses, via **`GET Library/{id}`** or **`Library?name=…&version=…`** on **`libraryBaseUrl`** (defaulting to **`hfsBaseUrl`**). **`text/cql`** is **not** compiled — store ELM attachments or send ELM inline/classpath. |
+| **FHIR `Library` resource** | A **FHIR REST resource** that may attach **ELM** (`application/elm+xml`, `application/elm+json`) or **`text/cql`** in **`content[]`**. | When **`resolveLibraryArtifactsFromFhir`** is **true**, the sidecar loads the **primary** (if **`elm`** omitted) and **`include`** targets after classpath misses from **`libraryBaseUrl`** (KR) via **`GET Library/{id}`** or **`Library?name=…&version=…`**. **`libraryBaseUrl` is required** in that mode — there is no clinical fallback. **`text/cql`** is **not** compiled — store ELM attachments or send ELM inline/classpath. |
 
 **Resolution order** for **`include`**: inline **`includedLibraries`** → classpath → FHIR **`Library`** (if enabled).
 
@@ -121,7 +121,7 @@ For **`include`** dependencies missing from **`includedLibraries`** and classpat
 
 The loader chooses **`Library.content`** attachments with **`application/elm+xml`** / **`application/elm+json`** (with small MIME fallbacks). **`text/cql`** is ignored — translate to ELM before storage or send ELM in the POST/classpath.
 
-**Multi-tenant SaaS:** use **`libraryBaseUrl`** as the **knowledge-artifact** FHIR API root; leave it **null** to default to **`hfsBaseUrl`** until you split artifact FHIR from clinical FHIR. Set **`resolveLibraryArtifactsFromFhir`** to **false** if outbound **`Library`** reads must be disabled for a tenant (you must then supply non-blank **`elm`** for the primary).
+**Multi-tenant SaaS:** always set **`libraryBaseUrl`** to the knowledge-artifact (KR) FHIR API root when resolving libraries from FHIR. Set **`resolveLibraryArtifactsFromFhir`** to **false** if outbound **`Library`** reads must be disabled for a tenant (you must then supply non-blank **`elm`** for the primary, plus classpath/`includedLibraries` for includes).
 
 ---
 
@@ -146,7 +146,7 @@ Main fields (see also **`EvaluateExpressionRequest`** in source: [`Dtos.kt`](../
 | **`expression`** | Yes | Name of the expression definition to evaluate (e.g. **`PatientName`**). |
 | **`hfsBaseUrl`** | Yes | Base URL for **clinical** FHIR HTTP calls (whatever prefix makes **`GET …/Patient/{id}`** correct for your deployment). |
 | **`htsBaseUrl`** | Yes | Base URL for **terminology** FHIR HTTP calls (e.g. **`ValueSet/$expand`**). |
-| **`libraryBaseUrl`** | No | Base URL for **`Library`** reads when resolving missing includes. **Omit or blank** → same as **`hfsBaseUrl`**. Use a dedicated artifact FHIR when splitting knowledge from clinical data. |
+| **`libraryBaseUrl`** | **Yes** when resolving from FHIR | KR base for **primary** and all CQL **`include`** `Library` reads. **Required** when **`resolveLibraryArtifactsFromFhir`** is true (and for `$apply`). Does **not** fall back to **`hfsBaseUrl`**. |
 | **`resolveLibraryArtifactsFromFhir`** | No | Default **true**. If **false**, no outbound **`Library`** fetches (**requires non-blank `elm`** for the primary). |
 | **`includedLibraries`** | No | List of extra ELM payloads for **`include`** targets (each entry has **`elm`**, **`libraryId`**, optional **`libraryVersion`**, **`elmFormat`**). |
 | **`patientId`** | No | If set, establishes **Patient context** as the **id string** (not the full resource). The engine passes this to FHIR retrieve logic for patient-scoped queries. |
@@ -161,7 +161,7 @@ Main fields (see also **`EvaluateExpressionRequest`** in source: [`Dtos.kt`](../
 
 - The sidecar uses **HAPI FHIR** **`IGenericClient`** only as an **HTTP client** for FHIR resources and operations needed during evaluation.
 - **`encoding`** is set to **JSON** so requests prefer **`application/fhir+json`**, which avoids servers that mishandle XML for some interactions.
-- On first use, HAPI may call **`GET /metadata`** on each distinct base URL (**server validation**): **`hfsBaseUrl`**, **`htsBaseUrl`**, and (when **`resolveLibraryArtifactsFromFhir`** is **true**) the effective **library** base (**`libraryBaseUrl`** or **`hfsBaseUrl`**). Each must serve a valid **CapabilityStatement** when that client is exercised.
+- On first use, HAPI may call **`GET /metadata`** on each distinct base URL (**server validation**): **`hfsBaseUrl`**, **`htsBaseUrl`**, and (when resolving libraries from FHIR) **`libraryBaseUrl`**. Each must serve a valid **CapabilityStatement** when that client is exercised.
 
 Detailed KDoc: [`SidecarEvaluator.kt`](../src/main/kotlin/com/atrius/sidecar/cql/SidecarEvaluator.kt).
 

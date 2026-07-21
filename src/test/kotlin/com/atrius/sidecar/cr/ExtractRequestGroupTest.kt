@@ -98,7 +98,7 @@ class ExtractRequestGroupTest {
         )
         assertEquals(
             "https://atrius.in/fhir/r4/atrius-in/PlanDefinition/er-acute-breathlessness-pathway|0.1.0",
-            carePlan.instantiatesCanonicalFirstRep?.value,
+            carePlan.instantiatesCanonical.firstOrNull()?.value,
         )
         assertEquals("ED Acute Breathlessness Pathway", carePlan.title)
     }

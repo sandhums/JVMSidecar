@@ -8,6 +8,8 @@ import com.atrius.sidecar.cql.PrefetchRetrieveSupport
 import com.atrius.sidecar.cql.SidecarFhirClients
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.evaluationFailedException
+import com.atrius.sidecar.cql.requireLibraryBaseForApply
+import com.atrius.sidecar.cql.trimFhirBase
 import kotlinx.serialization.json.JsonElement
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.instance.model.api.IIdType
@@ -30,8 +32,8 @@ import org.opencds.cqf.fhir.utility.repository.RestRepository
  * [org.opencds.cqf.fhir:cqf-fhir-cr](https://github.com/cqframework/clinical-reasoning).
  *
  * Repository routing (Atrius stack):
- * - **content** → [ApplyPlanDefinitionRequest.libraryBaseUrl] (KR, PlanDefinition + Library)
- * - **data** → [ApplyPlanDefinitionRequest.hfsBaseUrl] (cr-fhir-bridge for QI-Core clinical data)
+ * - **content** → [ApplyPlanDefinitionRequest.libraryBaseUrl] (**required** KR — PlanDefinition, Library, CQL includes)
+ * - **data** → [ApplyPlanDefinitionRequest.hfsBaseUrl] (clinical HFS; optional bridge only for legacy QI projection)
  * - **terminology** → [ApplyPlanDefinitionRequest.htsBaseUrl] (HTS)
  *
  * Prefetched CDS Hooks resources are loaded into an in-memory repository overlay when [ApplyPlanDefinitionRequest.useServerData]
@@ -66,11 +68,10 @@ class SidecarPlanDefinitionApplier {
     }
 
     private fun applyInternal(request: ApplyPlanDefinitionRequest): ApplyPlanDefinitionResponse {
-        val libraryBase = trimBase(
-            request.libraryBaseUrl?.takeIf { it.isNotBlank() } ?: request.hfsBaseUrl,
-        )
-        val clinicalBase = trimBase(request.hfsBaseUrl)
-        val terminologyBase = trimBase(request.htsBaseUrl)
+        val libraryBase =
+            requireLibraryBaseForApply(request.libraryBaseUrl, "PlanDefinition/\$apply")
+        val clinicalBase = trimFhirBase(request.hfsBaseUrl)
+        val terminologyBase = trimFhirBase(request.htsBaseUrl)
 
         val fhirHttpCapture = SidecarFhirClients.captureForBase(clinicalBase)
         val fhirContext = SidecarFhirClients.fhirContext()
@@ -211,7 +212,6 @@ class SidecarPlanDefinitionApplier {
         return if (bundle.entry.isEmpty()) null else bundle
     }
 
-    private fun trimBase(url: String): String = url.trimEnd('/')
 }
 
 /**

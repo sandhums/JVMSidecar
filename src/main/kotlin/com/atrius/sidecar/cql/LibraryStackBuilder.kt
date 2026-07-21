@@ -13,7 +13,7 @@ internal fun evaluationCacheKey(
     if (!request.elm.isNullOrBlank()) return null
     if (!request.resolveLibraryArtifactsFromFhir) return null
     return EvaluationLibraryCache.cacheKey(
-        effectiveLibraryBase(request),
+        requireLibraryBaseForFhirResolution(request),
         request.libraryId,
         request.libraryVersion,
         primaryContentIdentity,
@@ -185,5 +185,41 @@ private fun versionedIdentifierFrom(src: VersionedIdentifier): VersionedIdentifi
 private fun libraryKey(id: VersionedIdentifier): Pair<String, String?> =
     (id.id ?: "") to id.version?.takeIf { it.isNotBlank() }
 
-internal fun effectiveLibraryBase(request: EvaluateExpressionRequest): String =
-    (request.libraryBaseUrl?.takeIf { it.isNotBlank() } ?: request.hfsBaseUrl).trimEnd('/')
+/**
+ * Explicit knowledge-artifact base ([EvaluateExpressionRequest.libraryBaseUrl]), or null when unset.
+ *
+ * Library **primary** and CQL **`include`** FHIR reads must use this base (KR). They must **not**
+ * fall back to [EvaluateExpressionRequest.hfsBaseUrl] (clinical) — that pattern forced
+ * cr-fhir-bridge `/Library` routing.
+ */
+internal fun explicitLibraryBase(request: EvaluateExpressionRequest): String? =
+    request.libraryBaseUrl?.takeIf { it.isNotBlank() }?.trimEnd('/')
+
+/**
+ * Knowledge base for FHIR `Library` resolution (primary + includes).
+ *
+ * Requires a non-blank [EvaluateExpressionRequest.libraryBaseUrl] whenever
+ * [EvaluateExpressionRequest.resolveLibraryArtifactsFromFhir] is true.
+ */
+internal fun requireLibraryBaseForFhirResolution(request: EvaluateExpressionRequest): String =
+    explicitLibraryBase(request)
+        ?: throw IllegalArgumentException(
+            "libraryBaseUrl is required when resolveLibraryArtifactsFromFhir is true " +
+                "(CQL include libraries and primary Library artifacts load from KR, not hfsBaseUrl)",
+        )
+
+/** Shared trim for apply / evaluate content bases. */
+internal fun trimFhirBase(url: String): String = url.trimEnd('/')
+
+/**
+ * KR content base for `$apply`. Requires [libraryBaseUrl] so PlanDefinition / Library / includes
+ * never silently use the clinical [hfsBaseUrl].
+ */
+internal fun requireLibraryBaseForApply(libraryBaseUrl: String?, operation: String): String {
+    val base = libraryBaseUrl?.takeIf { it.isNotBlank() }?.trimEnd('/')
+    return base
+        ?: throw IllegalArgumentException(
+            "libraryBaseUrl is required for $operation " +
+                "(KR content base for PlanDefinition/Library; do not use hfsBaseUrl for includes)",
+        )
+}

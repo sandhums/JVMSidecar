@@ -7,6 +7,8 @@ import com.atrius.sidecar.cql.PrefetchRetrieveSupport
 import com.atrius.sidecar.cql.SidecarFhirClients
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.evaluationFailedException
+import com.atrius.sidecar.cql.requireLibraryBaseForApply
+import com.atrius.sidecar.cql.trimFhirBase
 import com.atrius.sidecar.fhir.sidecarCrSettings
 import kotlinx.serialization.json.JsonElement
 import org.hl7.fhir.instance.model.api.IBaseResource
@@ -65,11 +67,9 @@ class SidecarActivityDefinitionApplier {
 
     private fun applyInternal(request: ApplyActivityDefinitionRequest): ApplyActivityDefinitionResponse {
         val libraryBase =
-            trimBase(
-                request.libraryBaseUrl?.takeIf { it.isNotBlank() } ?: request.hfsBaseUrl,
-            )
-        val clinicalBase = trimBase(request.hfsBaseUrl)
-        val terminologyBase = trimBase(request.htsBaseUrl)
+            requireLibraryBaseForApply(request.libraryBaseUrl, "ActivityDefinition/\$apply")
+        val clinicalBase = trimFhirBase(request.hfsBaseUrl)
+        val terminologyBase = trimFhirBase(request.htsBaseUrl)
 
         val fhirHttpCapture = SidecarFhirClients.captureForBase(clinicalBase)
         val fhirContext = SidecarFhirClients.fhirContext()
@@ -190,6 +190,4 @@ class SidecarActivityDefinitionApplier {
         }
         return if (bundle.entry.isEmpty()) null else bundle
     }
-
-    private fun trimBase(url: String): String = url.trimEnd('/')
 }
