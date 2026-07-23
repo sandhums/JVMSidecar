@@ -32,7 +32,9 @@ class SidecarMetricsTest {
         assertEquals(before.evaluateErrors + 1, after.evaluateErrors)
         assertEquals(before.libraryStackCacheHits + 1, after.libraryStackCacheHits)
         assertEquals(before.libraryStackCacheMisses + 1, after.libraryStackCacheMisses)
-        assertTrue(after.evaluateAvgDurationMs >= before.evaluateAvgDurationMs)
+        // SidecarMetrics is a shared singleton: recording samples below the prior
+        // mean lowers the average, so only assert it reflects recorded samples.
+        assertTrue(after.evaluateAvgDurationMs > 0)
     }
 
     @Test
@@ -50,6 +52,6 @@ class SidecarMetricsTest {
         val after = SidecarMetrics.snapshot()
         assertEquals(before.applyTotal + 1, after.applyTotal)
         assertEquals(before.evaluateErrors, after.evaluateErrors)
-        assertTrue(after.applyAvgDurationMs >= before.applyAvgDurationMs)
+        assertTrue(after.applyAvgDurationMs > 0)
     }
 }
