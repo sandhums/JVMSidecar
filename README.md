@@ -26,6 +26,17 @@ cd JVMsidecar
 mvn -q compile exec:java
 ```
 
+Packaged fat jar (Docker / systemd):
+
+```bash
+mvn -q package -DskipTests
+# → target/JVMsidecar-1.0-SNAPSHOT.jar (shaded, Main-Class set)
+docker build -t atrius/cql-sidecar:staging .
+```
+
+Staging compose (sibling of `atrius-his` under `~/atrius/JVMsidecar`) wires this
+image as service `cql-sidecar` on `127.0.0.1:8088`.
+
 Default HTTP port is **8088** (override with env **`SIDECAR_PORT`**).
 
 - **Health:** `GET http://localhost:8088/health`

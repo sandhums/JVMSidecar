@@ -1,0 +1,8 @@
+.git
+.idea
+.cursor
+target
+**/.DS_Store
+*.md
+docs
+.github
