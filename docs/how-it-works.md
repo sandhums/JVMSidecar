@@ -64,13 +64,14 @@ Prefetch on the BFF path is already lean (~4–5ms / 4 keys) and is not the bott
 
 **Same-version KR re-import** (new ELM, same `Library.version`) auto-invalidates evaluate library caches via `meta.versionId` / ELM fingerprint.
 
-Manual flush (clears **evaluate and apply** process caches):
+Manual flush (clears **evaluate and apply** process caches). In non-dev (`SIDECAR_ENV=staging|production`) `SIDECAR_ADMIN_TOKEN` is required:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8088/v1/admin/cache/libraries/clear \
-  -H "Authorization: Bearer ${SIDECAR_ADMIN_TOKEN:-}"
+  -H "Authorization: Bearer ${SIDECAR_ADMIN_TOKEN}"
 ```
 
+Process metrics: Prometheus `GET /metrics` (or JSON `GET /metrics.json`).
 Buckets cleared: `evaluationLibraryStacks`, `fhirLibraryResources`, `terminologyExpansions`, `krContentResources`, `applyExpandResults`, `cqfEvaluationSettingsCaches`.
 
 **Restart the sidecar** still clears everything. After a restart, expect one cold compile before warm latency returns.

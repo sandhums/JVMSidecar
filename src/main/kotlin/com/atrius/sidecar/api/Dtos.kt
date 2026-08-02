@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonNames
 @Serializable
 data class HealthResponse(val status: String)
 
-/** Cumulative process metrics (`GET /metrics`). */
+/** Cumulative process metrics (`GET /metrics.json` or `Accept: application/json`). Prometheus text is default at `GET /metrics`. */
 @Serializable
 data class SidecarMetricsSnapshot(
     val evaluateTotal: Long,

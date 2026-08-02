@@ -40,7 +40,10 @@ image as service `cql-sidecar` on `127.0.0.1:8088`.
 Default HTTP port is **8088** (override with env **`SIDECAR_PORT`**).
 
 - **Health:** `GET http://localhost:8088/health`
+- **Metrics:** `GET http://localhost:8088/metrics` (Prometheus); `GET /metrics.json` for JSON
 - **Evaluate:** `POST http://localhost:8088/v1/evaluate/expression` with JSON body (see [docs/how-it-works.md](docs/how-it-works.md) for the schema and an example).
+
+Non-dev: set `SIDECAR_ENV=staging|production` and `SIDECAR_ADMIN_TOKEN` (required at startup for admin cache clear).
 
 Optional FHIR HTTP tracing: `-Dsidecar.fhir.http.log=true` or **`SIDECAR_FHIR_HTTP_LOG=true`** (logger **`com.atrius.sidecar.fhir.http`** at INFO).
 

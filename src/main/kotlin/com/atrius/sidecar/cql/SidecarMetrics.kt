@@ -5,8 +5,9 @@ import java.util.concurrent.atomic.AtomicLong
 import org.slf4j.LoggerFactory
 
 /**
- * Process-wide counters for minimal production observability (no Prometheus in v1).
- * Per-request details are also logged with target `sidecar_evaluate_metrics`.
+ * Process-wide counters for production observability.
+ * Prometheus text is served at `GET /metrics`; JSON remains at `GET /metrics.json`
+ * (or `Accept: application/json`).
  */
 object SidecarMetrics {
     private val logger = LoggerFactory.getLogger(SidecarMetrics::class.java)
@@ -84,5 +85,79 @@ object SidecarMetrics {
             libraryStackCacheMisses = libraryStackCacheMisses.get(),
             krLibraryFetches = krLibraryFetches.get(),
         )
+    }
+
+    /**
+     * Prometheus exposition format (0.0.4). Counters use `_total` / `_sum` suffixes;
+     * averages are gauges derived from the same atomics as [snapshot].
+     */
+    fun prometheusText(service: String = "cql-sidecar"): String {
+        val s = snapshot()
+        val label = """service="$service""""
+        val evalSum = evaluateDurationMsSum.get()
+        val applySum = applyDurationMsSum.get()
+        return buildString {
+            fun helpType(name: String, help: String, type: String) {
+                append("# HELP ").append(name).append(' ').append(help).append('\n')
+                append("# TYPE ").append(name).append(' ').append(type).append('\n')
+            }
+            fun sample(name: String, value: Number) {
+                append(name).append('{').append(label).append("} ").append(value).append('\n')
+            }
+
+            helpType("sidecar_evaluate_total", "Total evaluate/expression requests", "counter")
+            sample("sidecar_evaluate_total", s.evaluateTotal)
+
+            helpType("sidecar_evaluate_errors_total", "Evaluate requests that failed", "counter")
+            sample("sidecar_evaluate_errors_total", s.evaluateErrors)
+
+            helpType(
+                "sidecar_evaluate_duration_ms_sum",
+                "Cumulative evaluate wall time in milliseconds",
+                "counter",
+            )
+            sample("sidecar_evaluate_duration_ms_sum", evalSum)
+
+            helpType(
+                "sidecar_evaluate_avg_duration_ms",
+                "Mean evaluate duration in milliseconds",
+                "gauge",
+            )
+            sample("sidecar_evaluate_avg_duration_ms", s.evaluateAvgDurationMs)
+
+            helpType("sidecar_apply_total", "Total PlanDefinition/ActivityDefinition apply requests", "counter")
+            sample("sidecar_apply_total", s.applyTotal)
+
+            helpType(
+                "sidecar_apply_duration_ms_sum",
+                "Cumulative apply wall time in milliseconds",
+                "counter",
+            )
+            sample("sidecar_apply_duration_ms_sum", applySum)
+
+            helpType("sidecar_apply_avg_duration_ms", "Mean apply duration in milliseconds", "gauge")
+            sample("sidecar_apply_avg_duration_ms", s.applyAvgDurationMs)
+
+            helpType(
+                "sidecar_library_stack_cache_hits_total",
+                "Prepared CQL library stack cache hits",
+                "counter",
+            )
+            sample("sidecar_library_stack_cache_hits_total", s.libraryStackCacheHits)
+
+            helpType(
+                "sidecar_library_stack_cache_misses_total",
+                "Prepared CQL library stack cache misses",
+                "counter",
+            )
+            sample("sidecar_library_stack_cache_misses_total", s.libraryStackCacheMisses)
+
+            helpType(
+                "sidecar_kr_library_fetches_total",
+                "KR FHIR Library resource HTTP fetches (process lifetime)",
+                "counter",
+            )
+            sample("sidecar_kr_library_fetches_total", s.krLibraryFetches)
+        }
     }
 }

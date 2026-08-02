@@ -18,6 +18,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=build /out/cql-sidecar.jar /app/cql-sidecar.jar
 ENV SIDECAR_PORT=8088 \
+    SIDECAR_ENV=development \
     JAVA_OPTS="-Xms256m -Xmx1024m"
 USER sidecar
 EXPOSE 8088

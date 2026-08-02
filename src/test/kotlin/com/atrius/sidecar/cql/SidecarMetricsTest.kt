@@ -54,4 +54,22 @@ class SidecarMetricsTest {
         assertEquals(before.evaluateErrors, after.evaluateErrors)
         assertTrue(after.applyAvgDurationMs > 0)
     }
+
+    @Test
+    fun prometheusText_includes_counters_and_service_label() {
+        SidecarMetrics.recordEvaluate(
+            durationMs = 10,
+            libraryCacheHit = true,
+            libraryId = "Lib",
+            libraryVersion = "1",
+            expression = "X",
+            krFetchesThisRequest = 0,
+            error = false,
+        )
+        val text = SidecarMetrics.prometheusText()
+        assertTrue(text.contains("# TYPE sidecar_evaluate_total counter"))
+        assertTrue(text.contains("""sidecar_evaluate_total{service="cql-sidecar"}"""))
+        assertTrue(text.contains("# TYPE sidecar_library_stack_cache_hits_total counter"))
+        assertTrue(text.contains("""sidecar_kr_library_fetches_total{service="cql-sidecar"}"""))
+    }
 }
