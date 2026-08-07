@@ -34,13 +34,41 @@ internal object SidecarExpandCache {
     fun cacheKey(terminologyBase: String, resourceType: String?, idPart: String?, op: String): String =
         "${terminologyBase.trimEnd('/')}\u0000${resourceType.orEmpty()}\u0000${idPart.orEmpty()}\u0000$op"
 
+    /**
+     * Cache successful non-empty expands only. Empty / failed expands are often transient
+     * (HTS lag after KR import) and must not stick for the process lifetime.
+     */
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> getOrLoad(key: String, loader: () -> T): T =
-        byKey.computeIfAbsent(key) { loader() } as T
+    fun <T : Any> getOrLoad(key: String, loader: () -> T): T {
+        byKey[key]?.let { return it as T }
+        val loaded = loader()
+        if (!isEmptyOrFailedExpand(loaded)) {
+            byKey.putIfAbsent(key, loaded)
+        }
+        return loaded
+    }
 
     fun clear(): Int {
         val n = byKey.size
         byKey.clear()
         return n
     }
+
+    internal fun isEmptyOrFailedExpand(result: Any): Boolean =
+        when (result) {
+            is org.hl7.fhir.r4.model.ValueSet ->
+                result.expansion?.contains.isNullOrEmpty()
+            is org.hl7.fhir.r4.model.Parameters -> {
+                val vs =
+                    result.parameter
+                        ?.firstOrNull { it.name == "return" || it.resource is org.hl7.fhir.r4.model.ValueSet }
+                        ?.resource as? org.hl7.fhir.r4.model.ValueSet
+                vs?.expansion?.contains.isNullOrEmpty()
+            }
+            is ca.uhn.fhir.rest.api.MethodOutcome ->
+                result.resource == null ||
+                    (result.resource is org.hl7.fhir.r4.model.ValueSet &&
+                        (result.resource as org.hl7.fhir.r4.model.ValueSet).expansion?.contains.isNullOrEmpty())
+            else -> false
+        }
 }

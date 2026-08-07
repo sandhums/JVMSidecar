@@ -33,4 +33,29 @@ class ValueSetExpansionCacheTest {
         assertEquals(1, otherBase.size)
         assertEquals(1, otherVs.size)
     }
+
+    @Test
+    fun does_not_cache_empty_expansions() {
+        val loads = AtomicInteger(0)
+        val emptyThenPopulated = {
+            if (loads.incrementAndGet() == 1) {
+                emptyList()
+            } else {
+                listOf(Code().withSystem("http://example.org/cs").withCode("A"))
+            }
+        }
+
+        val first =
+            ValueSetExpansionCache.getOrExpand("http://127.0.0.1:9091", "vs-empty\u0000") {
+                emptyThenPopulated()
+            }
+        val second =
+            ValueSetExpansionCache.getOrExpand("http://127.0.0.1:9091", "vs-empty\u0000") {
+                emptyThenPopulated()
+            }
+
+        assertEquals(0, first.size)
+        assertEquals(1, second.size)
+        assertEquals(2, loads.get())
+    }
 }

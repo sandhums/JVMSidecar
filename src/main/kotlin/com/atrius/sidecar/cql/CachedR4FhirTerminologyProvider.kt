@@ -49,13 +49,23 @@ internal class CachedR4FhirTerminologyProvider(
 internal object ValueSetExpansionCache {
     private val byHtsBase = ConcurrentHashMap<String, ConcurrentHashMap<String, List<Code>>>()
 
+    /**
+     * Cache non-empty expansions only. An empty `$expand` is usually a transient HTS/KR miss;
+     * caching it poisons later CQL retrieves (e.g. ObservationVitalSigns category filters →
+     * sepsis SIRS criteria silently false until admin cache clear).
+     */
     fun getOrExpand(
         htsBase: String,
         valueSetKey: String,
         loader: () -> List<Code>,
     ): List<Code> {
         val bucket = byHtsBase.computeIfAbsent(htsBase) { ConcurrentHashMap() }
-        return bucket.computeIfAbsent(valueSetKey) { loader() }
+        bucket[valueSetKey]?.let { return it }
+        val loaded = loader()
+        if (loaded.isNotEmpty()) {
+            bucket.putIfAbsent(valueSetKey, loaded)
+        }
+        return loaded
     }
 
     fun clear(): Int {
