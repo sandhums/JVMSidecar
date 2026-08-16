@@ -60,6 +60,8 @@ internal class SidecarPrefetchRetrieveProvider(
         for (candidateType in resolveDataTypes(dataType)) {
             val match = retrieveForType(
                 candidateType,
+                context,
+                contextValue,
                 codePath,
                 codes,
                 valueSet,
@@ -80,6 +82,8 @@ internal class SidecarPrefetchRetrieveProvider(
 
     private fun retrieveForType(
         dataType: String,
+        context: String?,
+        contextValue: Any?,
         codePath: String?,
         codes: Iterable<Code>?,
         valueSet: String?,
@@ -89,8 +93,14 @@ internal class SidecarPrefetchRetrieveProvider(
         dateRange: Interval?,
     ): List<Any> {
         val resourcesOfType = prefetchByType[dataType] ?: return emptyList()
-        if (resourcesOfType.isEmpty() || (dateRange == null && codePath == null)) {
-            return resourcesOfType
+        val scoped =
+            if (context == "Patient") {
+                filterByPatientContext(resourcesOfType, contextValue)
+            } else {
+                resourcesOfType
+            }
+        if (scoped.isEmpty() || (dateRange == null && codePath == null)) {
+            return scoped
         }
 
         var filterCodes = codes
@@ -101,13 +111,49 @@ internal class SidecarPrefetchRetrieveProvider(
         }
 
         val out = ArrayList<Any>()
-        for (resource in resourcesOfType) {
+        for (resource in scoped) {
             if (!matchesFilters(resource, codePath, filterCodes, datePath, dateLowPath, dateHighPath, dateRange)) {
                 continue
             }
             out.add(resource)
         }
         return out
+    }
+
+    private fun filterByPatientContext(resources: List<Any>, contextValue: Any?): List<Any> {
+        val pid = patientIdPart(contextValue) ?: return resources
+        return resources.filter { matchesPatientContext(it, pid) }
+    }
+
+    private fun patientIdPart(contextValue: Any?): String? {
+        val raw =
+            when (contextValue) {
+                null -> return null
+                is org.hl7.fhir.r4.model.Patient -> contextValue.idElement?.idPart
+                else -> contextValue.toString()
+            }?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return raw.substringAfterLast('/')
+    }
+
+    private fun matchesPatientContext(resource: Any, patientId: String): Boolean {
+        if (resource is org.hl7.fhir.r4.model.Patient) {
+            return resource.idElement?.idPart == patientId
+        }
+        val subjectId = referenceIdPart(modelResolver.resolvePath(resource, "subject"))
+        val patientRefId = referenceIdPart(modelResolver.resolvePath(resource, "patient"))
+        val bound = subjectId ?: patientRefId ?: return true
+        return bound == patientId
+    }
+
+    private fun referenceIdPart(value: Any?): String? {
+        val ref =
+            when (value) {
+                null -> return null
+                is org.hl7.fhir.r4.model.Reference -> value.reference
+                is String -> value
+                else -> null
+            }?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return ref.substringAfterLast('/')
     }
 
     private fun matchesFilters(

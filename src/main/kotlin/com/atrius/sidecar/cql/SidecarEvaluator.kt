@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.client.interceptor.ThreadLocalCapturingInterceptor
 import com.atrius.sidecar.api.EvaluateExpressionRequest
 import com.atrius.sidecar.api.EvaluateExpressionResponse
+import com.atrius.sidecar.config.SidecarEnv
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.HashMap
@@ -37,13 +38,12 @@ class SidecarEvaluator {
     fun evaluate(request: EvaluateExpressionRequest): EvaluateExpressionResponse {
         require(request.libraryId.isNotBlank()) { "libraryId must not be blank" }
         require(request.expression.isNotBlank()) { "expression must not be blank" }
-        require(request.hfsBaseUrl.isNotBlank()) { "hfsBaseUrl must not be blank" }
-        require(request.htsBaseUrl.isNotBlank()) { "htsBaseUrl must not be blank" }
-
-        val clinicalBase = trimBase(request.hfsBaseUrl)
-        val terminologyBase = trimBase(request.htsBaseUrl)
+        val clinicalBase = SidecarEnv.requireAllowedFhirBase(request.hfsBaseUrl, "hfsBaseUrl")
+        val terminologyBase = SidecarEnv.requireAllowedFhirBase(request.htsBaseUrl, "htsBaseUrl")
         // Capture clearing: use explicit KR base when set; never invent a library base from clinical.
-        val libraryBase = explicitLibraryBase(request)
+        val libraryBase = explicitLibraryBase(request)?.also {
+            SidecarEnv.requireAllowedFhirBase(it, "libraryBaseUrl")
+        }
         clearFhirCaptures(clinicalBase, terminologyBase, *(libraryBase?.let { arrayOf(it) } ?: emptyArray()))
         val fhirHttpCapture = SidecarFhirClients.captureForBase(clinicalBase)
         val krFetchBaseline = SidecarMetrics.currentKrLibraryFetches()
@@ -195,7 +195,7 @@ class SidecarEvaluator {
         val libraryClient = SidecarFhirClients.client(libraryBase)
         val libraryLoader = FhirLibraryElmLoader(libraryClient, libraryBase)
         val primaryResource =
-            libraryLoader.loadLibrary(versionedIdentifierFromRequest(request))
+            libraryLoader.loadLibraryFresh(versionedIdentifierFromRequest(request))
                 ?: throw IllegalArgumentException(
                     "FHIR Library not found for libraryId '${request.libraryId}'" +
                         (request.libraryVersion?.takeIf { it.isNotBlank() }?.let { v -> " version '$v'" } ?: "") +

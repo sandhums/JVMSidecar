@@ -162,11 +162,16 @@
             <artifactId>quick</artifactId>
             <version>${cqframework.version}</version>
         </dependency>
-        <!-- PlanDefinition/$apply, Measure/$evaluate-measure (CQF Clinical Reasoning) -->
+        <!-- PlanDefinition/$apply, ActivityDefinition/$apply, Measure/$evaluate-measure (CQF Clinical Reasoning) -->
         <dependency>
             <groupId>org.opencds.cqf.fhir</groupId>
             <artifactId>cqf-fhir-cr</artifactId>
             <version>${cqf.fhir.cr.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.2.2</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>

@@ -19,7 +19,11 @@ object SidecarMetrics {
     private val libraryStackCacheMisses = AtomicLong()
     private val krLibraryFetches = AtomicLong()
     private val applyTotal = AtomicLong()
+    private val applyErrors = AtomicLong()
     private val applyDurationMsSum = AtomicLong()
+    private val measureTotal = AtomicLong()
+    private val measureErrors = AtomicLong()
+    private val measureDurationMsSum = AtomicLong()
 
     fun recordEvaluate(
         durationMs: Long,
@@ -54,9 +58,22 @@ object SidecarMetrics {
     fun recordApply(durationMs: Long, planDefinitionId: String?, error: Boolean) {
         applyTotal.incrementAndGet()
         applyDurationMsSum.addAndGet(durationMs)
+        if (error) applyErrors.incrementAndGet()
         logger.info(
             "sidecar apply completed planDefinitionId={} durationMs={} error={}",
             planDefinitionId ?: "",
+            durationMs,
+            error,
+        )
+    }
+
+    fun recordMeasure(durationMs: Long, measureId: String?, error: Boolean) {
+        measureTotal.incrementAndGet()
+        measureDurationMsSum.addAndGet(durationMs)
+        if (error) measureErrors.incrementAndGet()
+        logger.info(
+            "sidecar measure evaluate completed measureId={} durationMs={} error={}",
+            measureId ?: "",
             durationMs,
             error,
         )
@@ -73,14 +90,20 @@ object SidecarMetrics {
     fun snapshot(): SidecarMetricsSnapshot {
         val evals = evaluateTotal.get()
         val applies = applyTotal.get()
+        val measures = measureTotal.get()
         val evalMs = evaluateDurationMsSum.get()
         val applyMs = applyDurationMsSum.get()
+        val measureMs = measureDurationMsSum.get()
         return SidecarMetricsSnapshot(
             evaluateTotal = evals,
             evaluateErrors = evaluateErrors.get(),
             evaluateAvgDurationMs = if (evals > 0) evalMs.toDouble() / evals else 0.0,
             applyTotal = applies,
+            applyErrors = applyErrors.get(),
             applyAvgDurationMs = if (applies > 0) applyMs.toDouble() / applies else 0.0,
+            measureTotal = measures,
+            measureErrors = measureErrors.get(),
+            measureAvgDurationMs = if (measures > 0) measureMs.toDouble() / measures else 0.0,
             libraryStackCacheHits = libraryStackCacheHits.get(),
             libraryStackCacheMisses = libraryStackCacheMisses.get(),
             krLibraryFetches = krLibraryFetches.get(),
@@ -128,6 +151,9 @@ object SidecarMetrics {
             helpType("sidecar_apply_total", "Total PlanDefinition/ActivityDefinition apply requests", "counter")
             sample("sidecar_apply_total", s.applyTotal)
 
+            helpType("sidecar_apply_errors_total", "Apply requests that failed", "counter")
+            sample("sidecar_apply_errors_total", s.applyErrors)
+
             helpType(
                 "sidecar_apply_duration_ms_sum",
                 "Cumulative apply wall time in milliseconds",
@@ -137,6 +163,26 @@ object SidecarMetrics {
 
             helpType("sidecar_apply_avg_duration_ms", "Mean apply duration in milliseconds", "gauge")
             sample("sidecar_apply_avg_duration_ms", s.applyAvgDurationMs)
+
+            helpType("sidecar_measure_evaluate_total", "Total Measure/\$evaluate-measure requests", "counter")
+            sample("sidecar_measure_evaluate_total", s.measureTotal)
+
+            helpType("sidecar_measure_evaluate_errors_total", "Measure evaluate requests that failed", "counter")
+            sample("sidecar_measure_evaluate_errors_total", s.measureErrors)
+
+            helpType(
+                "sidecar_measure_evaluate_duration_ms_sum",
+                "Cumulative measure evaluate wall time in milliseconds",
+                "counter",
+            )
+            sample("sidecar_measure_evaluate_duration_ms_sum", measureDurationMsSum.get())
+
+            helpType(
+                "sidecar_measure_evaluate_avg_duration_ms",
+                "Mean measure evaluate duration in milliseconds",
+                "gauge",
+            )
+            sample("sidecar_measure_evaluate_avg_duration_ms", s.measureAvgDurationMs)
 
             helpType(
                 "sidecar_library_stack_cache_hits_total",

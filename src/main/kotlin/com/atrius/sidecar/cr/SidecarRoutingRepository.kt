@@ -270,14 +270,18 @@ internal class SidecarRoutingRepository(
 
         private fun expandUrlCacheKey(parameters: IBaseParameters?): String {
             if (parameters !is Parameters) return "noparams"
-            val url =
+            fun param(name: String): String =
                 parameters.parameter
-                    ?.firstOrNull { it.name == "url" }
+                    ?.firstOrNull { it.name == name }
                     ?.value
                     ?.primitiveValue()
                     ?.trim()
                     .orEmpty()
-            return url.ifBlank { "noparams" }
+            val url = param("url").ifBlank { "nourl" }
+            val version = param("version")
+            val offset = param("offset")
+            val count = param("count")
+            return "$url\u0000$version\u0000$offset\u0000$count"
         }
 
         /** Map canonical / URL library ids to KR logical ids before content read. */

@@ -1,9 +1,13 @@
 package com.atrius.sidecar.cql
 
 import ca.uhn.fhir.context.FhirContext
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.Bundle
+import org.hl7.fhir.r4.model.Patient
+import org.hl7.fhir.r4.model.Resource
 import org.opencds.cqf.cql.engine.fhir.retrieve.RestFhirRetrieveProvider
 import org.opencds.cqf.cql.engine.fhir.searchparam.SearchParameterResolver
 import org.opencds.cqf.cql.engine.terminology.TerminologyProvider
@@ -20,6 +24,7 @@ import org.slf4j.LoggerFactory
 internal object PrefetchRetrieveSupport {
 
     private val logger = LoggerFactory.getLogger(PrefetchRetrieveSupport::class.java)
+    private val json = Json { encodeDefaults = true }
 
     private val profileRetrieveTargets: Map<String, String> by lazy { loadProfileRetrieveTargets() }
 
@@ -72,13 +77,34 @@ internal object PrefetchRetrieveSupport {
         val parser = fhirContext.newJsonParser()
         val out = ArrayList<Any>()
         for ((_, elem) in prefetch) {
-            if (elem.toString() == "null") continue
+            if (elem is JsonNull) continue
+            val encoded = json.encodeToString(JsonElement.serializer(), elem)
+            if (encoded == "null") continue
             val parsed =
-                runCatching { parser.parseResource(elem.toString()) as? IBaseResource }
+                runCatching { parser.parseResource(encoded) as? IBaseResource }
                     .getOrNull() ?: continue
             addResources(parsed, out)
         }
         return out
+    }
+
+    /**
+     * Flatten CDS prefetch into a collection bundle; omit Patient (subject comes from `$apply` params).
+     */
+    internal fun prefetchToBundle(
+        fhirContext: FhirContext,
+        prefetch: Map<String, JsonElement>?,
+    ): Bundle? {
+        val resources = dedupeResourcesByTypeAndId(flattenPrefetchResources(fhirContext, prefetch))
+        if (resources.isEmpty()) return null
+        val bundle = Bundle()
+        bundle.type = Bundle.BundleType.COLLECTION
+        for (resource in resources) {
+            if (resource is Resource && resource !is Patient) {
+                bundle.addEntry().resource = resource
+            }
+        }
+        return if (bundle.entry.isEmpty()) null else bundle
     }
 
     /**

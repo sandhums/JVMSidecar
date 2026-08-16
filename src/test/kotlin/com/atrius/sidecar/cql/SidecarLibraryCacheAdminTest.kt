@@ -10,5 +10,8 @@ class SidecarLibraryCacheAdminTest {
         assertTrue(resp.cleared.contains("evaluationLibraryStacks"))
         assertTrue(resp.cleared.contains("fhirLibraryResources"))
         assertTrue(resp.cleared.contains("terminologyExpansions"))
+        assertTrue(resp.cleared.contains("krContentResources"))
+        assertTrue(resp.cleared.contains("applyExpandResults"))
+        assertTrue(resp.cleared.contains("cqfEvaluationSettingsCaches"))
     }
 }

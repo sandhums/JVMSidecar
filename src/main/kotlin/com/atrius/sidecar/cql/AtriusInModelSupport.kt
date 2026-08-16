@@ -6,7 +6,8 @@ import org.cqframework.cql.cql2elm.ModelManager
 import org.cqframework.cql.cql2elm.createModelInfoProvider
 import org.hl7.elm.r1.VersionedIdentifier
 import org.hl7.fhir.r4.model.Library
-import java.util.WeakHashMap
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
 internal const val ATRIUS_IN_MODEL_NAME = "AtriusIn"
 internal const val ATRIUS_IN_MODEL_VERSION = "0.1.0"
@@ -14,7 +15,8 @@ internal const val ATRIUS_IN_MODEL_URI = "https://atrius.in/fhir/r4/atrius-in"
 private const val ATRIUS_IN_MODELINFO_LIBRARY_ID = "AtriusIn-ModelInfo"
 private const val MODELINFO_CLASSPATH = "/modelinfo/atriusin-modelinfo-0.1.0.xml"
 
-private val registeredManagers = WeakHashMap<ModelManager, Boolean>()
+private val registeredManagers: MutableSet<ModelManager> =
+    Collections.newSetFromMap(ConcurrentHashMap())
 
 /**
  * Registers AtriusIn modelinfo (classpath fallback, optional FHIR `Library/AtriusIn-ModelInfo`)
@@ -23,7 +25,7 @@ private val registeredManagers = WeakHashMap<ModelManager, Boolean>()
 internal fun ensureAtriusInModelInfo(modelManager: ModelManager, libraryLoader: FhirLibraryElmLoader?) {
     runCatching { modelManager.resolveModel(ATRIUS_IN_MODEL_NAME, ATRIUS_IN_MODEL_VERSION) }.getOrNull()?.let { return }
 
-    if (registeredManagers.putIfAbsent(modelManager, true) == null) {
+    if (registeredManagers.add(modelManager)) {
         val provider =
             createModelInfoProvider { id, _, version ->
                 if (id != ATRIUS_IN_MODEL_NAME) return@createModelInfoProvider null

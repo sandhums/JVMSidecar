@@ -2,6 +2,7 @@ package com.atrius.sidecar.config
 
 import com.atrius.sidecar.server.routes.adminAuthorized
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -50,6 +51,42 @@ class SidecarEnvTest {
         assertFalse(adminAuthorized(null))
         assertFalse(adminAuthorized("Bearer wrong"))
         assertTrue(adminAuthorized("Bearer secret"))
+    }
+
+    @Test
+    fun stagingWithoutAllowlist_failsRequire() {
+        values["SIDECAR_ENV"] = "staging"
+        values["SIDECAR_ADMIN_TOKEN"] = "secret"
+        install()
+        assertThrows(IllegalStateException::class.java) {
+            SidecarEnv.requireAllowlistInNonDev()
+        }
+    }
+
+    @Test
+    fun stagingWithAllowlist_rejectsUnknownBase() {
+        values["SIDECAR_ENV"] = "staging"
+        values["SIDECAR_ADMIN_TOKEN"] = "secret"
+        values["SIDECAR_ALLOWED_FHIR_BASES"] = "http://127.0.0.1:8082, http://127.0.0.1:8090/"
+        install()
+        SidecarEnv.requireStartupConfig()
+        assertEquals("http://127.0.0.1:8082", SidecarEnv.requireAllowedFhirBase("http://127.0.0.1:8082/", "hfsBaseUrl"))
+        val ex =
+            assertThrows(IllegalArgumentException::class.java) {
+                SidecarEnv.requireAllowedFhirBase("http://evil.example/fhir", "hfsBaseUrl")
+            }
+        assertTrue(ex.message!!.contains("SIDECAR_ALLOWED_FHIR_BASES"))
+    }
+
+    @Test
+    fun developmentAllowsAnyFhirBaseWhenAllowlistUnset() {
+        values["SIDECAR_ENV"] = "development"
+        install()
+        SidecarEnv.requireStartupConfig()
+        assertEquals(
+            "http://127.0.0.1:59999/fhir",
+            SidecarEnv.requireAllowedFhirBase("http://127.0.0.1:59999/fhir/", "hfsBaseUrl"),
+        )
     }
 
     @Test

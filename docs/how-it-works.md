@@ -22,9 +22,9 @@ Source: `AtriusInModelSupport.kt`, `ElmLibraryHydration.kt`.
 
 | Mechanism | Scope | Effect |
 |-----------|-------|--------|
-| **`EvaluationLibraryCache`** | Process | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, **contentIdentity**, includes)` where **contentIdentity** is `Library.meta.versionId` or an ELM SHA-256 fallback |
-| **`FhirLibraryResourceCaches`** | Process | Reuses KR `Library` FHIR resources per KR base URL keyed by logical id/version **and** content identity |
-| **`ValueSetExpansionCache`** / **`CachedR4FhirTerminologyProvider`** | Process | Reuses HTS `$expand` results per terminology base |
+| **`EvaluationLibraryCache`** | Process (Caffeine, 30m TTL) | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, **contentIdentity**, includes)` where **contentIdentity** is `Library.meta.versionId` or an ELM SHA-256 fallback |
+| **`FhirLibraryResourceCaches`** | Process (Caffeine, 60s TTL) | Reuses KR `Library` FHIR resources per KR base URL keyed by logical id/version **and** content identity. **Includes are cache-first.** Evaluate **primary** always refreshes from KR so same-version re-imports invalidate stacks. |
+| **`ValueSetExpansionCache`** / **`CachedR4FhirTerminologyProvider`** | Process (Caffeine, 60s TTL) | Reuses HTS `$expand` results per terminology base |
 | **`SidecarFhirClients`** | Process | Single `FhirContext`; pooled clients per base URL; `GET /metadata` once per base |
 
 Canonical Atrius library URLs (`https://atrius.in/fhir/r4/atrius-in/…`) are normalized to KR logical ids **before** any outbound HTTP to the public site (`LibraryIdentifierNormalization.kt`, `KrCanonicalLibrarySourceProvider.kt`).
@@ -46,8 +46,8 @@ CDS Hooks pathway services (e.g. HF admission) call **`$apply`** via CQF `PlanDe
 | Mechanism | File(s) | Effect |
 |-----------|---------|--------|
 | Shared FHIR clients + validation context | `SidecarFhirClients.kt`, `SidecarFhirContext.kt` | One `FhirContext`; pooled clients; metadata once per base |
-| KR content cache for apply routing | `SidecarKrContentCache` in `SidecarApplyCaches.kt`, used by `SidecarRoutingRepository.kt` | Cache PlanDefinition / ActivityDefinition / Library reads by `(contentBase, type, id)` |
-| Expand cache for apply terminology | `SidecarExpandCache` in `SidecarApplyCaches.kt` | Cache `$expand` MethodOutcome / Parameters by HTS base + ValueSet id |
+| KR content cache for apply routing | `SidecarKrContentCache` in `SidecarApplyCaches.kt`, used by `SidecarRoutingRepository.kt` | Cache PlanDefinition / ActivityDefinition / Library reads by `(contentBase, type, id)` with 60s TTL |
+| Expand cache for apply terminology | `SidecarExpandCache` in `SidecarApplyCaches.kt` | Cache `$expand` MethodOutcome / Parameters by HTS base + ValueSet id + url/version/offset/count |
 | **Process-wide `CrSettings` / `EvaluationSettings`** | `sidecarCrSettings()` in `SidecarFhirContext.kt` | Shared CQF compile caches across all `$apply` (and activity apply) calls — this is what dropped warm apply from ~1.3s to ~120ms |
 | AtriusIn namespace on CR settings | same | Registers FHIR / QICore / AtriusIn namespaces once |
 
@@ -72,7 +72,15 @@ curl -s -X POST http://127.0.0.1:8088/v1/admin/cache/libraries/clear \
 ```
 
 Process metrics: Prometheus `GET /metrics` (or JSON `GET /metrics.json`).
-Buckets cleared: `evaluationLibraryStacks`, `fhirLibraryResources`, `terminologyExpansions`, `krContentResources`, `applyExpandResults`, `cqfEvaluationSettingsCaches`.
+Buckets cleared: `evaluationLibraryStacks`, `fhirLibraryResources`, `terminologyExpansions`, `krContentResources`, `applyExpandResults`, `cqfEvaluationSettingsCaches` (counts are reported separately in the JSON body).
+
+### FHIR base allowlist
+
+In development, request `hfsBaseUrl` / `htsBaseUrl` / `libraryBaseUrl` may be any HTTP origin. In non-dev, set **`SIDECAR_ALLOWED_FHIR_BASES`** to a comma-separated list of trimmed bases (no trailing slash). Missing allowlist refuses startup. Evaluate, `$apply`, and `$evaluate-measure` return **400** when a request base is not on the list.
+
+### Default Measurement Period on `$apply`
+
+If CQL parameters omit `"Measurement Period"`, `$apply` injects the current calendar year as a Period so eCQM PlanDefinitions can evaluate. Pass an explicit interval to override.
 
 **Restart the sidecar** still clears everything. After a restart, expect one cold compile before warm latency returns.
 ---
@@ -156,6 +164,16 @@ Main fields (see also **`EvaluateExpressionRequest`** in source: [`Dtos.kt`](../
 
 **Classpath / FHIR fallback for includes:** if an included library is **not** in `includedLibraries`, the loader looks for **`/elm-libraries/{libraryId}-{version}.xml|json`** then **`/elm-libraries/{libraryId}.xml|json`** on the classpath—see [`ElmLibrarySources.kt`](../src/main/kotlin/com/atrius/sidecar/cql/ElmLibrarySources.kt). If still missing and **`resolveLibraryArtifactsFromFhir`** is **true**, it tries FHIR **`Library`** on **`libraryBaseUrl`** (see [`FhirLibraryElmLoader.kt`](../src/main/kotlin/com/atrius/sidecar/cql/FhirLibraryElmLoader.kt), [`FhirElmLibrarySourceProvider.kt`](../src/main/kotlin/com/atrius/sidecar/cql/FhirElmLibrarySourceProvider.kt)).
 
+Numeric CQL results are encoded as JSON **strings** (e.g. `"42"`) in `EvaluateExpressionResponse.result`.
+
+### `POST /v1/plandefinition/apply` / `POST /v1/activitydefinition/apply`
+
+Same three bases as evaluate. **`libraryBaseUrl` is required.** Optional `prefetch`, `parameters`, `fhirAuthorization`. Response is CarePlan + RequestGroup (plan) or a draft request resource (activity).
+
+### `POST /v1/measure/evaluate`
+
+FHIR **`Measure/$evaluate-measure`**. Fields: `measureId` or `measureUrl`, `patientId`, optional `periodStart` / `periodEnd` (ISO date or instant), `reportType` (default `subject`), same bases / prefetch / parameters. Response: `measureReport` JSON.
+
 ---
 
 ## 5. FHIR client behavior (clinical + terminology + optional library)
@@ -208,7 +226,8 @@ If you want to browse Kotlin without changing anything:
 | HTTP routes | [`Routing.kt`](../src/main/kotlin/com/atrius/sidecar/server/routes/Routing.kt) |
 | Request/response JSON models | [`Dtos.kt`](../src/main/kotlin/com/atrius/sidecar/api/Dtos.kt) |
 | End-to-end evaluation | [`SidecarEvaluator.kt`](../src/main/kotlin/com/atrius/sidecar/cql/SidecarEvaluator.kt) |
-| PlanDefinition / ActivityDefinition `$apply` | [`SidecarPlanDefinitionApplier.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarPlanDefinitionApplier.kt), [`SidecarActivityDefinitionApplier.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarActivityDefinitionApplier.kt) |
+| PlanDefinition / ActivityDefinition `$apply` | [`SidecarPlanDefinitionApplier.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarPlanDefinitionApplier.kt), [`SidecarActivityDefinitionApplier.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarActivityDefinitionApplier.kt), [`ApplyRuntime.kt`](../src/main/kotlin/com/atrius/sidecar/cr/ApplyRuntime.kt) |
+| Measure `$evaluate-measure` | [`SidecarMeasureEvaluator.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarMeasureEvaluator.kt) |
 | Apply KR/HTS routing + caches | [`SidecarRoutingRepository.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarRoutingRepository.kt), [`SidecarApplyCaches.kt`](../src/main/kotlin/com/atrius/sidecar/cr/SidecarApplyCaches.kt) |
 | Shared CR / CQF compile settings | [`SidecarFhirContext.kt`](../src/main/kotlin/com/atrius/sidecar/fhir/SidecarFhirContext.kt) (`sidecarCrSettings`) |
 | Cache admin clear | [`SidecarLibraryCacheAdmin.kt`](../src/main/kotlin/com/atrius/sidecar/cql/SidecarLibraryCacheAdmin.kt) |

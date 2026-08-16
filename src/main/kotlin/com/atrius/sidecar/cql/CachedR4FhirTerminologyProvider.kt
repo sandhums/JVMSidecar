@@ -6,7 +6,6 @@ import org.opencds.cqf.cql.engine.runtime.Code
 import org.opencds.cqf.cql.engine.terminology.CodeSystemInfo
 import org.opencds.cqf.cql.engine.terminology.TerminologyProvider
 import org.opencds.cqf.cql.engine.terminology.ValueSetInfo
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * [R4FhirTerminologyProvider] with process-wide caching of ValueSet `$expand` results.
@@ -47,7 +46,7 @@ internal class CachedR4FhirTerminologyProvider(
 
 /** ValueSet expansion codes keyed by `(htsBase, valueSetId, version)`. */
 internal object ValueSetExpansionCache {
-    private val byHtsBase = ConcurrentHashMap<String, ConcurrentHashMap<String, List<Code>>>()
+    private val byKey = SidecarProcessCaches.contentCache<String, List<Code>>()
 
     /**
      * Cache non-empty expansions only. An empty `$expand` is usually a transient HTS/KR miss;
@@ -59,18 +58,14 @@ internal object ValueSetExpansionCache {
         valueSetKey: String,
         loader: () -> List<Code>,
     ): List<Code> {
-        val bucket = byHtsBase.computeIfAbsent(htsBase) { ConcurrentHashMap() }
-        bucket[valueSetKey]?.let { return it }
+        val key = "${htsBase.trimEnd('/')}\u0000$valueSetKey"
+        byKey.getIfPresent(key)?.let { return it }
         val loaded = loader()
         if (loaded.isNotEmpty()) {
-            bucket.putIfAbsent(valueSetKey, loaded)
+            byKey.put(key, loaded)
         }
         return loaded
     }
 
-    fun clear(): Int {
-        val n = byHtsBase.size
-        byHtsBase.clear()
-        return n
-    }
+    fun clear(): Int = SidecarProcessCaches.invalidateAll(byKey)
 }

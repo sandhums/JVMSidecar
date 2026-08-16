@@ -1,6 +1,7 @@
 package com.atrius.sidecar.cql
 
 import org.cqframework.cql.cql2elm.LibraryContentType
+import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.Library
 import java.security.MessageDigest
 
@@ -11,6 +12,16 @@ import java.security.MessageDigest
 internal fun libraryContentIdentity(library: Library): String {
     library.meta?.versionId?.takeIf { it.isNotBlank() }?.let { return "vid:$it" }
     return "elm:${elmContentSha256(library)}"
+}
+
+/** Identity for KR content cache entries (PlanDefinition / ActivityDefinition / Measure / Library). */
+internal fun resourceContentIdentity(resource: IBaseResource): String {
+    if (resource is Library) return libraryContentIdentity(resource)
+    val vid = resource.meta?.versionId?.takeIf { it.isNotBlank() }
+    if (vid != null) return "vid:$vid"
+    val lastUpdated = resource.meta?.lastUpdated?.time?.toString()
+    val idPart = resource.idElement?.idPart.orEmpty()
+    return "lu:${lastUpdated ?: "none"}:$idPart"
 }
 
 internal fun elmContentSha256(library: Library): String {

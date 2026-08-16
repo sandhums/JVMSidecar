@@ -25,8 +25,11 @@ object SidecarLibraryCacheAdmin {
                     "cqfEvaluationSettingsCaches",
                 ),
             evaluationStacksRemoved = stacks,
-            fhirLibraryResourcesRemoved = resources + krContent,
-            terminologyExpansionBucketsRemoved = terminology + expands + cqf,
+            fhirLibraryResourcesRemoved = resources,
+            terminologyExpansionBucketsRemoved = terminology,
+            krContentResourcesRemoved = krContent,
+            applyExpandResultsRemoved = expands,
+            cqfEvaluationSettingsCachesRemoved = cqf,
         )
     }
 }

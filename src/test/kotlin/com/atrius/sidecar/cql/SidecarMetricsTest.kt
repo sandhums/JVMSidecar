@@ -51,7 +51,7 @@ class SidecarMetricsTest {
         SidecarMetrics.recordApply(durationMs = 200, planDefinitionId = "cms165", error = false)
         val after = SidecarMetrics.snapshot()
         assertEquals(before.applyTotal + 1, after.applyTotal)
-        assertEquals(before.evaluateErrors, after.evaluateErrors)
+        assertEquals(before.applyErrors, after.applyErrors)
         assertTrue(after.applyAvgDurationMs > 0)
     }
 

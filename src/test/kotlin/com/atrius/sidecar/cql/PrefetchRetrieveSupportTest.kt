@@ -156,4 +156,37 @@ class PrefetchRetrieveSupportTest {
         assertTrue(encounters.isNotEmpty())
         assertEquals("e1", (encounters.first() as Encounter).idElement.idPart)
     }
+
+    @Test
+    fun sidecar_prefetch_retrieve_filters_to_context_patient() {
+        val keep =
+            Condition().apply {
+                id = "c-keep"
+                subject = org.hl7.fhir.r4.model.Reference("Patient/p1")
+            }
+        val drop =
+            Condition().apply {
+                id = "c-drop"
+                subject = org.hl7.fhir.r4.model.Reference("Patient/p2")
+            }
+        val provider = SidecarPrefetchRetrieveProvider(listOf(keep, drop), modelResolver, emptyMap())
+        val result =
+            provider.retrieve(
+                "Patient",
+                "subject",
+                "p1",
+                "Condition",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+            )
+        val rows = result?.filterIsInstance<Condition>().orEmpty()
+        assertEquals(1, rows.size)
+        assertEquals("c-keep", rows.first().idElement.idPart)
+    }
 }

@@ -290,7 +290,7 @@ class SidecarEvaluatorTest {
     @Test
     fun hydratesCms165ElmFromKr() {
         val kr = System.getenv("KR_BASE_URL") ?: "http://127.0.0.1:8079"
-        assumeFhirMetadataReachable(kr, "KR")
+        assumeKrLibraryPresent(kr, "CMS165FHIRControllingHighBloodPressure")
         val client =
             ca.uhn.fhir.context.FhirContext.forR4().newRestfulGenericClient(kr).apply {
                 encoding = ca.uhn.fhir.rest.api.EncodingEnum.JSON
@@ -322,7 +322,7 @@ class SidecarEvaluatorTest {
     @Test
     fun seedsAtriusCms165CompiledLibraryBeforeResolve() {
         val kr = System.getenv("KR_BASE_URL") ?: "http://127.0.0.1:8079"
-        assumeFhirMetadataReachable(kr, "KR")
+        assumeKrLibraryPresent(kr, "AtriusCMS165ControllingHighBP")
         val client =
             ca.uhn.fhir.context.FhirContext.forR4().newRestfulGenericClient(kr).apply {
                 encoding = ca.uhn.fhir.rest.api.EncodingEnum.JSON
@@ -375,7 +375,7 @@ class SidecarEvaluatorTest {
     @Test
     fun seedsCms165CompiledLibraryBeforeResolve() {
         val kr = System.getenv("KR_BASE_URL") ?: "http://127.0.0.1:8079"
-        assumeFhirMetadataReachable(kr, "KR")
+        assumeKrLibraryPresent(kr, "CMS165FHIRControllingHighBloodPressure")
         val client =
             ca.uhn.fhir.context.FhirContext.forR4().newRestfulGenericClient(kr).apply {
                 encoding = ca.uhn.fhir.rest.api.EncodingEnum.JSON

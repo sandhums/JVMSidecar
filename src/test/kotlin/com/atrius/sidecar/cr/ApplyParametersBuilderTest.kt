@@ -2,7 +2,6 @@ package com.atrius.sidecar.cr
 
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import com.atrius.sidecar.fhir.newSidecarFhirContext
 import org.hl7.fhir.r4.model.Parameters
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -10,11 +9,9 @@ import org.junit.jupiter.api.Test
 
 class ApplyParametersBuilderTest {
 
-    private val fhirContext = newSidecarFhirContext()
-
     @Test
     fun defaultsMeasurementPeriodToCurrentYearWhenAbsent() {
-        val params = buildApplyParameters(fhirContext, null) as Parameters
+        val params = buildApplyParameters(null) as Parameters
         val period = params.parameter[0].value as org.hl7.fhir.r4.model.Period
         assertEquals("Measurement Period", params.parameter[0].name)
         assertNotNull(period.startElement?.valueAsString)
@@ -25,7 +22,6 @@ class ApplyParametersBuilderTest {
     fun normalizesDateOnlyMeasurementPeriodToDateTime() {
         val params =
             buildApplyParameters(
-                fhirContext,
                 mapOf(
                     "Measurement Period" to
                         buildJsonObject {
@@ -43,7 +39,6 @@ class ApplyParametersBuilderTest {
     fun preservesExplicitMeasurementPeriod() {
         val params =
             buildApplyParameters(
-                fhirContext,
                 mapOf(
                     "Measurement Period" to
                         buildJsonObject {

@@ -3,12 +3,14 @@ package com.atrius.sidecar.server.routes
 import com.atrius.sidecar.api.ApplyActivityDefinitionRequest
 import com.atrius.sidecar.api.ApplyPlanDefinitionRequest
 import com.atrius.sidecar.api.EvaluateExpressionRequest
+import com.atrius.sidecar.api.EvaluateMeasureRequest
 import com.atrius.sidecar.api.HealthResponse
 import com.atrius.sidecar.config.SidecarEnv
 import com.atrius.sidecar.cql.SidecarEvaluator
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.SidecarLibraryCacheAdmin
 import com.atrius.sidecar.cr.SidecarActivityDefinitionApplier
+import com.atrius.sidecar.cr.SidecarMeasureEvaluator
 import com.atrius.sidecar.cr.SidecarPlanDefinitionApplier
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -21,6 +23,8 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import java.security.MessageDigest
+import kotlin.text.Charsets
 
 private val PROMETHEUS_CONTENT_TYPE =
     ContentType.parse("text/plain; version=0.0.4; charset=utf-8")
@@ -29,6 +33,7 @@ fun Routing.sidecarRoutes(
     evaluator: SidecarEvaluator,
     planApplier: SidecarPlanDefinitionApplier,
     activityApplier: SidecarActivityDefinitionApplier,
+    measureEvaluator: SidecarMeasureEvaluator,
 ) {
     get("/health") { call.respond(HealthResponse(status = "ok")) }
 
@@ -73,6 +78,13 @@ fun Routing.sidecarRoutes(
             call.respond(activityApplier.apply(body))
         }
     }
+
+    route("/v1/measure/evaluate") {
+        post {
+            val body = call.receive<EvaluateMeasureRequest>()
+            call.respond(measureEvaluator.evaluate(body))
+        }
+    }
 }
 
 private fun wantsJsonMetrics(accept: String?, format: String?): Boolean {
@@ -95,5 +107,7 @@ internal fun adminAuthorized(authorizationHeader: String?): Boolean {
     }
     val header = authorizationHeader?.trim() ?: return false
     if (!header.startsWith("Bearer ", ignoreCase = true)) return false
-    return header.substring(7).trim() == required
+    val provided = header.substring(7).trim().toByteArray(Charsets.UTF_8)
+    val expected = required.toByteArray(Charsets.UTF_8)
+    return MessageDigest.isEqual(provided, expected)
 }

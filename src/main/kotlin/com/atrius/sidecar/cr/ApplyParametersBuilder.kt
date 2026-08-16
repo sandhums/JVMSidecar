@@ -1,8 +1,6 @@
 package com.atrius.sidecar.cr
 
-import ca.uhn.fhir.context.FhirContext
 import java.time.LocalDate
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -10,7 +8,6 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.booleanOrNull
 import org.hl7.fhir.instance.model.api.IBaseParameters
 import org.hl7.fhir.r4.model.BooleanType
-import org.hl7.fhir.r4.model.CodeableConcept
 import org.hl7.fhir.r4.model.DateTimeType
 import org.hl7.fhir.r4.model.Parameters
 import org.hl7.fhir.r4.model.Period
@@ -24,7 +21,6 @@ import org.hl7.fhir.r4.model.StringType
  * can evaluate without every caller passing CQL parameters explicitly.
  */
 internal fun buildApplyParameters(
-    fhirContext: FhirContext,
     parameters: Map<String, JsonElement>?,
 ): IBaseParameters? {
     val merged = mergeWithDefaultMeasurementPeriod(parameters)

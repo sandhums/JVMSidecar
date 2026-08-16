@@ -17,7 +17,11 @@ data class SidecarMetricsSnapshot(
     val evaluateErrors: Long,
     val evaluateAvgDurationMs: Double,
     val applyTotal: Long,
+    val applyErrors: Long = 0,
     val applyAvgDurationMs: Double,
+    val measureTotal: Long = 0,
+    val measureErrors: Long = 0,
+    val measureAvgDurationMs: Double = 0.0,
     val libraryStackCacheHits: Long,
     val libraryStackCacheMisses: Long,
     val krLibraryFetches: Long,
@@ -29,6 +33,9 @@ data class ClearLibraryCacheResponse(
     val evaluationStacksRemoved: Int,
     val fhirLibraryResourcesRemoved: Int,
     val terminologyExpansionBucketsRemoved: Int,
+    val krContentResourcesRemoved: Int = 0,
+    val applyExpandResultsRemoved: Int = 0,
+    val cqfEvaluationSettingsCachesRemoved: Int = 0,
 )
 
 /** JSON error body for failed requests (evaluate + generic handlers). FHIR fields set when upstream FHIR contributed to the failure. */
@@ -247,3 +254,34 @@ data class ApplyActivityDefinitionResponse(
     /** FHIR `$apply` **return** — transient draft request/event resource (not persisted). */
     val resource: JsonElement,
 )
+
+/**
+ * Invokes FHIR R4 **`Measure/$evaluate-measure`** on the sidecar (CQF Clinical Reasoning).
+ *
+ * Provide [measureId] (KR logical id) or [measureUrl] (canonical). [periodStart] / [periodEnd]
+ * are ISO-8601 instants or date-only strings. [reportType] defaults to `subject`.
+ */
+@Serializable
+data class EvaluateMeasureRequest(
+    val measureId: String? = null,
+    val measureUrl: String? = null,
+    val patientId: String,
+    val periodStart: String? = null,
+    val periodEnd: String? = null,
+    val reportType: String = "subject",
+    val hfsBaseUrl: String,
+    val htsBaseUrl: String,
+    val libraryBaseUrl: String? = null,
+    val useServerData: Boolean = false,
+    val prefetch: Map<String, JsonElement>? = null,
+    val parameters: Map<String, JsonElement>? = null,
+    val fhirAuthorization: FhirAuthorizationCredentials? = null,
+)
+
+@Serializable
+data class EvaluateMeasureResponse(
+    val measureId: String? = null,
+    /** FHIR `$evaluate-measure` **return** — [org.hl7.fhir.r4.model.MeasureReport]. */
+    val measureReport: JsonElement,
+)
+

@@ -8,7 +8,6 @@ import org.hl7.fhir.r4.model.Condition
 import org.hl7.fhir.r4.model.DiagnosticReport
 import org.hl7.fhir.r4.model.Encounter
 import org.hl7.fhir.r4.model.Patient
-import org.hl7.fhir.r4.model.Resource
 import org.opencds.cqf.fhir.utility.repository.InMemoryFhirRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,7 +54,7 @@ class SidecarPlanDefinitionApplierPrefetchTest {
         val flat = PrefetchRetrieveSupport.flattenPrefetchResources(fhirContext, prefetch)
         assertEquals(3, flat.size)
 
-        val dataBundle = applyPrefetchOverlayBundle(flat)
+        val dataBundle = PrefetchRetrieveSupport.prefetchToBundle(fhirContext, prefetch)!!
         assertEquals(2, dataBundle.entry.size)
 
         val repo = InMemoryFhirRepository(fhirContext, dataBundle)
@@ -98,22 +97,10 @@ class SidecarPlanDefinitionApplierPrefetchTest {
             )
         assertEquals(1, flat.size)
 
-        val dataBundle = applyPrefetchOverlayBundle(flat)
+        val dataBundle = PrefetchRetrieveSupport.prefetchToBundle(fhirContext, prefetch)!!
         assertEquals(1, dataBundle.entry.size)
 
         val repo = InMemoryFhirRepository(fhirContext, dataBundle)
         assertNotNull(repo.read(DiagnosticReport::class.java, reportA.idElement, emptyMap()))
-    }
-
-    /** Mirrors [SidecarPlanDefinitionApplier] prefetch overlay rules (flatten + dedupe + omit Patient). */
-    private fun applyPrefetchOverlayBundle(flat: List<Any>): Bundle {
-        val deduped = PrefetchRetrieveSupport.dedupeResourcesByTypeAndId(flat)
-        val dataBundle = Bundle().apply { type = Bundle.BundleType.COLLECTION }
-        for (resource in deduped) {
-            if (resource is Resource && resource !is Patient) {
-                dataBundle.addEntry().resource = resource
-            }
-        }
-        return dataBundle
     }
 }

@@ -112,4 +112,16 @@ class ExtractRequestGroupTest {
             ),
         )
     }
+
+    @Test
+    fun planDefinitionCanonicalPrefersUrlThenLibraryBase() {
+        assertEquals(
+            "https://example.org/PlanDefinition/hf",
+            planDefinitionCanonical("http://kr.example", "https://example.org/PlanDefinition/hf", "hf"),
+        )
+        assertEquals(
+            "http://kr.example/PlanDefinition/hf-admission-protocol",
+            planDefinitionCanonical("http://kr.example/", null, "hf-admission-protocol"),
+        )
+    }
 }

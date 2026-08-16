@@ -2,40 +2,104 @@ package com.atrius.sidecar.cql
 
 import ca.uhn.fhir.rest.client.api.IGenericClient
 import ca.uhn.fhir.rest.gclient.StringClientParam
+import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException
 import com.atrius.sidecar.api.ElmFormat
 import org.cqframework.cql.cql2elm.LibraryContentType
 import org.hl7.elm.r1.VersionedIdentifier
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Library
 
+internal fun interface LibraryHttpFetch {
+    fun fetch(
+        logicalId: String,
+        normalized: VersionedIdentifier,
+        original: VersionedIdentifier,
+    ): Library?
+}
+
 /**
- * Fetches R4 [Library] resources and caches them by logical id/version plus [libraryContentIdentity] for reuse between primary prefetch and
- * [FhirElmLibrarySourceProvider].
+ * Fetches R4 [Library] resources and caches them by logical id/version plus [libraryContentIdentity]
+ * for reuse between primary prefetch and [FhirElmLibrarySourceProvider].
+ *
+ * [loadLibrary] is cache-first (includes). [loadLibraryFresh] always hits KR so evaluate can
+ * detect same-version re-imports via content identity.
  */
 internal class FhirLibraryElmLoader(
-    private val client: IGenericClient,
+    private val client: IGenericClient? = null,
     krBase: String? = null,
     fetched: MutableMap<String, Library>? = null,
+    private val fetchOverride: LibraryHttpFetch? = null,
 ) {
-    private val resourceCache: MutableMap<String, Library> =
-        fetched ?: FhirLibraryResourceCaches.forBase(krBase ?: client.serverBase)
+    private val krBase: String =
+        krBase?.trimEnd('/')
+            ?: client?.serverBase?.trimEnd('/')
+            ?: "local"
+    private val localCache: MutableMap<String, Library>? = fetched
 
-    fun loadLibrary(requested: VersionedIdentifier): Library? {
+    fun loadLibrary(requested: VersionedIdentifier): Library? = loadLibrary(requested, forceRefresh = false)
+
+    fun loadLibraryFresh(requested: VersionedIdentifier): Library? = loadLibrary(requested, forceRefresh = true)
+
+    private fun loadLibrary(requested: VersionedIdentifier, forceRefresh: Boolean): Library? {
         val normalized = normalizeLibraryIdentifier(requested)
         val id = normalized.id?.takeIf { it.isNotBlank() } ?: return null
         val logicalKey = libraryLogicalCacheKey(normalized)
+        if (!forceRefresh) {
+            cachedForLogicalKey(logicalKey)?.let { return it }
+        }
+        val previous = if (forceRefresh) cachedForLogicalKey(logicalKey) else null
         SidecarMetrics.recordKrLibraryFetch()
-        val loaded = fetchLibraryUncached(id, normalized, requested) ?: return null
-        val fullKey = libraryResourceCacheKey(logicalKey, libraryContentIdentity(loaded))
-        resourceCache[fullKey]?.let { return it }
+        val loaded = doFetch(id, normalized, requested) ?: return null
+        val identity = libraryContentIdentity(loaded)
+        val fullKey = libraryResourceCacheKey(logicalKey, identity)
+        if (previous != null && libraryContentIdentity(previous) != identity) {
+            EvaluationLibraryCache.evictForPrimary(this.krBase, normalized.id ?: id, normalized.version)
+            if (localCache == null) {
+                FhirLibraryResourceCaches.clearBase(this.krBase)
+            } else {
+                pruneStaleResourceCacheEntries(logicalKey, except = null)
+            }
+        }
         pruneStaleResourceCacheEntries(logicalKey, except = fullKey)
-        resourceCache[fullKey] = loaded
+        putCached(fullKey, loaded)
         return loaded
     }
 
-    private fun pruneStaleResourceCacheEntries(logicalKey: String, except: String) {
+    private fun cachedForLogicalKey(logicalKey: String): Library? {
         val prefix = "$logicalKey\u0000"
-        resourceCache.keys.filter { it.startsWith(prefix) && it != except }.forEach { resourceCache.remove(it) }
+        if (localCache != null) {
+            return localCache.entries.firstOrNull { it.key.startsWith(prefix) }?.value
+        }
+        return FhirLibraryResourceCaches.findByLogical(krBase, logicalKey)
+    }
+
+    private fun putCached(fullKey: String, library: Library) {
+        if (localCache != null) {
+            localCache[fullKey] = library
+        } else {
+            FhirLibraryResourceCaches.put(krBase, fullKey, library)
+        }
+    }
+
+    private fun pruneStaleResourceCacheEntries(logicalKey: String, except: String?) {
+        if (localCache != null) {
+            val prefix = "$logicalKey\u0000"
+            localCache.keys.filter { it.startsWith(prefix) && it != except }.forEach { localCache.remove(it) }
+        } else {
+            FhirLibraryResourceCaches.pruneLogical(krBase, logicalKey, except)
+        }
+    }
+
+    private fun doFetch(
+        logicalId: String,
+        normalized: VersionedIdentifier,
+        original: VersionedIdentifier,
+    ): Library? {
+        fetchOverride?.let { override ->
+            return fhirReadOrNull { override.fetch(logicalId, normalized, original) }
+        }
+        return fetchLibraryUncached(logicalId, normalized, original)
     }
 
     private fun fetchLibraryUncached(
@@ -55,14 +119,13 @@ internal class FhirLibraryElmLoader(
     }
 
     private fun searchLibraryByCanonicalUrl(canonicalUrl: String, requested: VersionedIdentifier): Library? {
+        val fhirClient = client ?: return null
         val bundle =
-            try {
-                client.search<Bundle>().forResource(Library::class.java).where(
+            fhirReadOrNull {
+                fhirClient.search<Bundle>().forResource(Library::class.java).where(
                     StringClientParam("url").matches().value(canonicalUrl),
                 ).returnBundle(Bundle::class.java).execute()
-            } catch (_: Exception) {
-                return null
-            }
+            } ?: return null
         val reqVersion = requested.version?.takeIf { it.isNotBlank() }
         return bundle.entry.orEmpty().asSequence().mapNotNull { entry -> entry.resource as? Library }.firstOrNull { lib ->
             (lib.url == canonicalUrl || lib.name == requested.id) &&
@@ -70,28 +133,27 @@ internal class FhirLibraryElmLoader(
         }
     }
 
-    private fun readLibraryById(id: String): Library? =
-        try {
-            client.read().resource(Library::class.java).withId(id).execute()
-        } catch (_: Exception) {
-            null
+    private fun readLibraryById(id: String): Library? {
+        val fhirClient = client ?: return null
+        return fhirReadOrNull {
+            fhirClient.read().resource(Library::class.java).withId(id).execute()
         }
+    }
 
     private fun searchLibraryByName(name: String, requested: VersionedIdentifier): Library? {
+        val fhirClient = client ?: return null
         val reqVersion = requested.version?.takeIf { it.isNotBlank() }
         var query =
-            client.search<Bundle>().forResource(Library::class.java).where(
+            fhirClient.search<Bundle>().forResource(Library::class.java).where(
                 StringClientParam("name").matches().value(name),
             )
         if (!reqVersion.isNullOrBlank()) {
             query = query.and(StringClientParam("version").matches().value(reqVersion))
         }
         val bundle =
-            try {
+            fhirReadOrNull {
                 query.returnBundle(Bundle::class.java).execute()
-            } catch (_: Exception) {
-                return null
-            }
+            } ?: return null
         return bundle.entry.orEmpty().asSequence().mapNotNull { entry -> entry.resource as? Library }.firstOrNull { lib ->
             lib.name == name && versionsCompatible(lib.version, requested)
         }
@@ -101,6 +163,21 @@ internal class FhirLibraryElmLoader(
         val idMatches = lib.name == requested.id || lib.idElement?.idPart == requested.id
         if (!idMatches) return false
         return versionsCompatible(lib.version, requested)
+    }
+}
+
+/**
+ * 404 / [ResourceNotFoundException] → null (try the next lookup). Other FHIR HTTP errors propagate
+ * so KR 500s become evaluation failures instead of "library not found".
+ */
+internal fun <T> fhirReadOrNull(block: () -> T): T? {
+    try {
+        return block()
+    } catch (_: ResourceNotFoundException) {
+        return null
+    } catch (e: BaseServerResponseException) {
+        if (e.statusCode == 404) return null
+        throw e
     }
 }
 

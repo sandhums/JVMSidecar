@@ -1,31 +1,20 @@
 package com.atrius.sidecar.cr
 
-import ca.uhn.fhir.context.FhirContext
-import com.atrius.sidecar.fhir.sidecarCrSettings
 import com.atrius.sidecar.api.ApplyPlanDefinitionRequest
 import com.atrius.sidecar.api.ApplyPlanDefinitionResponse
-import com.atrius.sidecar.cql.PrefetchRetrieveSupport
-import com.atrius.sidecar.cql.SidecarFhirClients
 import com.atrius.sidecar.cql.SidecarMetrics
 import com.atrius.sidecar.cql.evaluationFailedException
-import com.atrius.sidecar.cql.requireLibraryBaseForApply
-import com.atrius.sidecar.cql.trimFhirBase
-import kotlinx.serialization.json.JsonElement
+import com.atrius.sidecar.fhir.sidecarCrSettings
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.instance.model.api.IIdType
 import org.hl7.fhir.instance.model.api.IPrimitiveType
-import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CanonicalType
 import org.hl7.fhir.r4.model.CarePlan
 import org.hl7.fhir.r4.model.IdType
-import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.RequestGroup
-import org.hl7.fhir.r4.model.Resource
-import org.opencds.cqf.fhir.cql.LibraryEngine
 import org.opencds.cqf.fhir.cr.plandefinition.PlanDefinitionProcessor
 import org.opencds.cqf.fhir.utility.monad.Eithers
-import org.opencds.cqf.fhir.utility.repository.RestRepository
 
 /**
  * Executes FHIR R4 **`PlanDefinition/$apply`** via [PlanDefinitionProcessor] from
@@ -48,8 +37,6 @@ class SidecarPlanDefinitionApplier {
 
     fun apply(request: ApplyPlanDefinitionRequest): ApplyPlanDefinitionResponse {
         require(request.patientId.isNotBlank()) { "patientId must not be blank" }
-        require(request.hfsBaseUrl.isNotBlank()) { "hfsBaseUrl must not be blank" }
-        require(request.htsBaseUrl.isNotBlank()) { "htsBaseUrl must not be blank" }
         require(
             !request.planDefinitionId.isNullOrBlank() || !request.planDefinitionUrl.isNullOrBlank(),
         ) { "planDefinitionId or planDefinitionUrl is required" }
@@ -68,38 +55,16 @@ class SidecarPlanDefinitionApplier {
     }
 
     private fun applyInternal(request: ApplyPlanDefinitionRequest): ApplyPlanDefinitionResponse {
-        val libraryBase =
-            requireLibraryBaseForApply(request.libraryBaseUrl, "PlanDefinition/\$apply")
-        val clinicalBase = trimFhirBase(request.hfsBaseUrl)
-        val terminologyBase = trimFhirBase(request.htsBaseUrl)
-
-        val fhirHttpCapture = SidecarFhirClients.captureForBase(clinicalBase)
-        val fhirContext = SidecarFhirClients.fhirContext()
-        val applyParameters = buildApplyParameters(fhirContext, request.parameters)
-
-        val contentClient = SidecarFhirClients.client(libraryBase)
-        val clinicalClient =
-            SidecarFhirClients.client(clinicalBase, request.fhirAuthorization?.accessToken)
-        val terminologyClient = SidecarFhirClients.client(terminologyBase)
-
-        val prefetchBundle =
-            if (request.useServerData) {
-                null
-            } else {
-                prefetchToBundle(fhirContext, request.prefetch)
-            }
-
-        val dataRepo = RestRepository(clinicalClient)
-        val contentRepo = RestRepository(contentClient)
-        val terminologyRepo = RestRepository(terminologyClient)
-        val routingRepo =
-            SidecarRoutingRepository(
-                fhirContext = fhirContext,
-                data = dataRepo,
-                content = contentRepo,
-                terminology = terminologyRepo,
-                contentBaseUrl = libraryBase,
-                terminologyBaseUrl = terminologyBase,
+        val runtime =
+            openApplyRuntime(
+                operation = "PlanDefinition/\$apply",
+                hfsBaseUrl = request.hfsBaseUrl,
+                htsBaseUrl = request.htsBaseUrl,
+                libraryBaseUrl = request.libraryBaseUrl,
+                useServerData = request.useServerData,
+                prefetch = request.prefetch,
+                parameters = request.parameters,
+                accessToken = request.fhirAuthorization?.accessToken,
             )
 
         val planDefinitionRef: org.opencds.cqf.fhir.utility.monad.Either3<
@@ -116,13 +81,7 @@ class SidecarPlanDefinitionApplier {
                     )
             }
 
-        val crSettings = sidecarCrSettings()
-        val processor = PlanDefinitionProcessor(routingRepo, crSettings)
-        // Use LibraryEngine(routingRepo) — do NOT pass data/content/terminology RestRepositories
-        // into the 3-repo apply overload. That path wraps them in CQF ProxyRepository, whose
-        // invoke(id, "$expand", …) returns null and breaks ValueSet membership when prefetch
-        // disables server-side :in searches.
-        val libraryEngine = LibraryEngine(routingRepo, crSettings.evaluationSettings)
+        val processor = PlanDefinitionProcessor(runtime.routingRepo, sidecarCrSettings())
 
         val subject = normalizeApplyReference(request.patientId, "Patient")!!
         val encounter = normalizeApplyReference(request.encounterId, "Encounter")
@@ -147,29 +106,28 @@ class SidecarPlanDefinitionApplier {
                     userTaskContext,
                     setting,
                     settingContext,
-                    applyParameters,
-                    prefetchBundle,
+                    runtime.applyParameters,
+                    runtime.prefetchBundle,
                     null,
-                    libraryEngine,
+                    runtime.libraryEngine,
                 )
             } catch (e: Exception) {
                 throw evaluationFailedException(
                     "PlanDefinition/\$apply failed:",
                     e,
-                    fhirHttpCapture,
-                    clinicalBase,
+                    runtime.fhirHttpCapture,
+                    runtime.clinicalBase,
                 )
             }
 
         val (carePlan, requestGroup) = normalizeApplyResult(result, subject)
-        val planCanonical =
-            request.planDefinitionUrl?.trim()?.takeIf { it.isNotBlank() }
-                ?: request.planDefinitionId?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    "https://atrius.in/fhir/r4/atrius-in/PlanDefinition/$it"
-                }
-        enrichCarePlanMetadata(carePlan, requestGroup, planCanonical)
+        enrichCarePlanMetadata(
+            carePlan,
+            requestGroup,
+            planDefinitionCanonical(runtime.libraryBase, request.planDefinitionUrl, request.planDefinitionId),
+        )
 
-        val parser = fhirContext.newJsonParser()
+        val parser = runtime.fhirContext.newJsonParser()
         val carePlanElement = json.parseToJsonElement(parser.encodeResourceToString(carePlan))
         val requestGroupElement = json.parseToJsonElement(parser.encodeResourceToString(requestGroup))
 
@@ -179,39 +137,6 @@ class SidecarPlanDefinitionApplier {
             requestGroup = requestGroupElement,
         )
     }
-
-    /**
-     * CDS Hooks prefetch values are usually a Patient resource plus searchset [Bundle]s per key.
-     * [InMemoryFhirRepository] indexes by `(resourceType, id)`; nesting multiple Bundle resources
-     * (all with null id) causes `Duplicate key null`. Flatten like evaluate/expression prefetch.
-     *
-     * **Patient is omitted** from the overlay. Per FHIR `PlanDefinition/$apply`, the evaluation
-     * subject is the required **`subject`** parameter (e.g. `Patient/cms165-demo`) — wired here as
-     * [ApplyPlanDefinitionRequest.patientId] → [PlanDefinitionProcessor.apply] subject argument; CQF
-     * resolves that reference from the clinical data repository. CDS Hooks prefetch `patient` is
-     * chart context for the EHR, not a second `$apply` subject. Duplicating Patient in the data
-     * bundle yields two subjects and breaks CQL `context Patient`. Legacy `evaluate/expression`
-     * binds the same subject via `contextParameter = Patient/{id}`.
-     */
-    private fun prefetchToBundle(
-        fhirContext: FhirContext,
-        prefetch: Map<String, JsonElement>?,
-    ): Bundle? {
-        val resources =
-            PrefetchRetrieveSupport.dedupeResourcesByTypeAndId(
-                PrefetchRetrieveSupport.flattenPrefetchResources(fhirContext, prefetch),
-            )
-        if (resources.isEmpty()) return null
-        val bundle = Bundle()
-        bundle.type = Bundle.BundleType.COLLECTION
-        for (resource in resources) {
-            if (resource is Resource && resource !is Patient) {
-                bundle.addEntry().resource = resource
-            }
-        }
-        return if (bundle.entry.isEmpty()) null else bundle
-    }
-
 }
 
 /**
