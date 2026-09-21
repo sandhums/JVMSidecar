@@ -24,12 +24,20 @@ Source: `AtriusInModelSupport.kt`, `ElmLibraryHydration.kt`.
 |-----------|-------|--------|
 | **`EvaluationLibraryCache`** | Process (Caffeine, 30m TTL) | Reuses hydrated `LibraryManager` + compiled libraries for the same `(libraryBase, libraryId, version, **contentIdentity**, includes)` where **contentIdentity** is `Library.meta.versionId` or an ELM SHA-256 fallback |
 | **`FhirLibraryResourceCaches`** | Process (Caffeine, 60s TTL) | Reuses KR `Library` FHIR resources per KR base URL keyed by logical id/version **and** content identity. **Includes are cache-first.** Evaluate **primary** always refreshes from KR so same-version re-imports invalidate stacks. |
-| **`ValueSetExpansionCache`** / **`CachedR4FhirTerminologyProvider`** | Process (Caffeine, 60s TTL) | Reuses HTS `$expand` results per terminology base |
+| **`ValueSetExpansionCache`** / **`CachedR4FhirTerminologyProvider`** | Process (Caffeine, 60s TTL) | Reuses HTS `$expand` results per terminology base. **`in` is not cached** — it still calls CQF `R4FhirTerminologyProvider.in` (`$validate-code`). See [Later: CQL `in`](#later-cql-in--hts-validate-code). |
 | **`SidecarFhirClients`** | Process | Single `FhirContext`; pooled clients per base URL; `GET /metadata` once per base |
 
 Canonical Atrius library URLs (`https://atrius.in/fhir/r4/atrius-in/…`) are normalized to KR logical ids **before** any outbound HTTP to the public site (`LibraryIdentifierNormalization.kt`, `KrCanonicalLibrarySourceProvider.kt`).
 
 Typical CMS165 **evaluate** latency: **~2.7s cold**, **~160ms warm**.
+
+### Later: CQL `in` / HTS `$validate-code`
+
+Not required for current measures (CMS131 works around it in CQL). Worth a sidecar slice when the next library needs `Concept in ValueSet` against a local CodeSystem.
+
+CQF `R4FhirTerminologyProvider.in` calls HTS `ValueSet/$validate-code` and casts **`Parameters[0]`** to `BooleanType`. HTS puts `code` (`CodeType`) first and `result` (`valueBoolean`) later, so the cast throws `ClassCastException`. `/v1/evaluate/expression` surfaces `TerminologyProviderException`. `/v1/measure/evaluate` swallows it and reports **not-in** (`status=complete`, numerator 0). Found 2026-09-21 on CMS131 `numerator-autonomous` (`atrius-in-loinc-answers` × `atrius-vs-autonomous-eye-exam-result`).
+
+`CachedR4FhirTerminologyProvider.in` currently forwards to that delegate. A later fix: implement `in` here via the expand cache (system + code), or read the `result` parameter by name. Do not depend on HTS putting `result` first. CMS131 CQL uses `~` against the two ETDRS answer codes until this lands (`AtriusIGDraft` `dqm-divergence-registry.json`, define `Autonomous Eye Exam in Measurement Period`).
 
 ### Caching — PlanDefinition `$apply` (`POST /v1/plandefinition/apply`)
 

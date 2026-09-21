@@ -21,6 +21,10 @@ internal class CachedR4FhirTerminologyProvider(
     private val delegate = R4FhirTerminologyProvider(fhirClient)
     private val htsBase = htsBaseUrl.trimEnd('/')
 
+    // Later: do not forward to CQF $validate-code. HTS puts Parameters[0]=code
+    // (CodeType); CQF casts it to BooleanType and throws. Measure eval then
+    // reports not-in. Implement via expand cache (system+code) or read the
+    // `result` parameter by name. See docs/how-it-works.md § Later: CQL `in`.
     override fun `in`(code: Code, valueSet: ValueSetInfo): Boolean = delegate.`in`(code, valueSet)
 
     override fun lookup(code: Code, codeSystem: CodeSystemInfo): Code = delegate.lookup(code, codeSystem)
