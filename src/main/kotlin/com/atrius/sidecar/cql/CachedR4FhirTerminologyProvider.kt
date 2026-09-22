@@ -1,6 +1,11 @@
 package com.atrius.sidecar.cql
 
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import org.hl7.fhir.r4.model.BooleanType
+import org.hl7.fhir.r4.model.IdType
+import org.hl7.fhir.r4.model.Parameters
+import org.hl7.fhir.r4.model.StringType
+import org.opencds.cqf.cql.engine.exception.TerminologyProviderException
 import org.opencds.cqf.cql.engine.fhir.terminology.R4FhirTerminologyProvider
 import org.opencds.cqf.cql.engine.runtime.Code
 import org.opencds.cqf.cql.engine.terminology.CodeSystemInfo
@@ -21,11 +26,48 @@ internal class CachedR4FhirTerminologyProvider(
     private val delegate = R4FhirTerminologyProvider(fhirClient)
     private val htsBase = htsBaseUrl.trimEnd('/')
 
-    // Later: do not forward to CQF $validate-code. HTS puts Parameters[0]=code
-    // (CodeType); CQF casts it to BooleanType and throws. Measure eval then
-    // reports not-in. Implement via expand cache (system+code) or read the
-    // `result` parameter by name. See docs/how-it-works.md § Later: CQL `in`.
-    override fun `in`(code: Code, valueSet: ValueSetInfo): Boolean = delegate.`in`(code, valueSet)
+    /**
+     * Membership via HTS `ValueSet/$validate-code`, reading the `result` parameter by name.
+     *
+     * CQF [R4FhirTerminologyProvider.in] casts `Parameters[0]` to [BooleanType]. HTS echoes
+     * `code` first and puts `result` later, so that cast throws and measure evaluation
+     * reports not-in. Codes with no system still use the delegate, which expands.
+     */
+    override fun `in`(code: Code, valueSet: ValueSetInfo): Boolean {
+        if (code.system.isNullOrBlank()) {
+            return delegate.`in`(code, valueSet)
+        }
+        try {
+            val id = delegate.resolveValueSetId(valueSet)
+            val response =
+                delegate.fhirClient
+                    .operation()
+                    .onInstance(IdType("ValueSet", id))
+                    .named("validate-code")
+                    .withParameter(Parameters::class.java, "code", StringType(code.code))
+                    .andParameter("system", StringType(code.system))
+                    .useHttpGet()
+                    .execute()
+            return validateCodeResult(response)
+        } catch (e: TerminologyProviderException) {
+            throw e
+        } catch (e: Exception) {
+            throw TerminologyProviderException(
+                "Error performing membership check of Code: $code in ValueSet: ${valueSet.id}",
+                e,
+            )
+        }
+    }
+
+    private fun validateCodeResult(response: Parameters): Boolean {
+        val value = response.getParameter("result")?.value
+        if (value is BooleanType) {
+            return value.booleanValue()
+        }
+        throw TerminologyProviderException(
+            "ValueSet/\$validate-code response has no boolean result parameter",
+        )
+    }
 
     override fun lookup(code: Code, codeSystem: CodeSystemInfo): Code = delegate.lookup(code, codeSystem)
 
