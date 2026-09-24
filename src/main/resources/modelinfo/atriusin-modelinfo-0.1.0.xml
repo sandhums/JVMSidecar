@@ -153,7 +153,7 @@
         <element name="description" elementType="System.String" target="%value.value"/>
         <element name="subject" elementType="FHIR.Reference"/>
         <element name="encounter" elementType="FHIR.Reference"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -269,7 +269,7 @@
         <element name="description" elementType="System.String" target="%value.value"/>
         <element name="subject" elementType="FHIR.Reference"/>
         <element name="encounter" elementType="FHIR.Reference"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -311,7 +311,7 @@
         <element name="name" elementType="System.String" target="%value.value"/>
         <element name="subject" elementType="FHIR.Reference"/>
         <element name="encounter" elementType="FHIR.Reference"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -339,7 +339,7 @@
         <element name="role" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
         <element name="member" elementType="FHIR.Reference"/>
         <element name="onBehalfOf" elementType="FHIR.Reference"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -355,7 +355,7 @@
         <element name="subType" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
         <element name="use" elementType="FHIR.Use" target="%value.value"/>
         <element name="patient" elementType="FHIR.Reference"/>
-        <element name="billablePeriod" target="FHIRHelpers.ToInterval(%value)">
+        <element name="billablePeriod" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -598,7 +598,7 @@
         <element name="outcome" elementType="FHIR.RemittanceOutcome" target="%value.value"/>
         <element name="disposition" elementType="System.String" target="%value.value"/>
         <element name="preAuthRef" elementType="System.String" target="%value.value"/>
-        <element name="preAuthPeriod" target="FHIRHelpers.ToInterval(%value)">
+        <element name="preAuthPeriod" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1168,7 +1168,7 @@
         <element name="beneficiary" elementType="FHIR.Reference"/>
         <element name="dependent" elementType="System.String" target="%value.value"/>
         <element name="relationship" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1206,7 +1206,7 @@
     </typeInfo>
     <typeInfo xsi:type="ClassInfo" namespace="AtriusIn" name="Coverage.CostToBeneficiary.Exception" retrievable="false" baseType="FHIR.BackboneElement">
         <element name="type" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1666,7 +1666,7 @@
         <element name="appointment">
             <elementTypeSpecifier xsi:type="ListTypeSpecifier" elementType="FHIR.Reference"/>
         </element>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1693,7 +1693,7 @@
     </typeInfo>
     <typeInfo xsi:type="ClassInfo" namespace="AtriusIn" name="Encounter.ClassHistory" retrievable="false" baseType="FHIR.BackboneElement">
         <element name="class" elementType="System.Code" target="FHIRHelpers.ToCode(%value)"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1725,7 +1725,7 @@
         <element name="location" elementType="FHIR.Reference"/>
         <element name="status" elementType="FHIR.EncounterLocationStatus" target="%value.value"/>
         <element name="physicalType" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1735,7 +1735,7 @@
         <element name="type" target="FHIRHelpers.ToConcept(%value)">
             <elementTypeSpecifier xsi:type="ListTypeSpecifier" elementType="System.Concept"/>
         </element>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1744,7 +1744,7 @@
     </typeInfo>
     <typeInfo xsi:type="ClassInfo" namespace="AtriusIn" name="Encounter.StatusHistory" retrievable="false" baseType="FHIR.BackboneElement">
         <element name="status" elementType="FHIR.EncounterStatus" target="%value.value"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -1847,7 +1847,7 @@
         </element>
         <element name="code" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
         <element name="subject" elementType="FHIR.Reference"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -2727,7 +2727,7 @@
     <typeInfo xsi:type="ClassInfo" namespace="AtriusIn" name="MedicationRequest.DispenseRequest" retrievable="false" baseType="FHIR.BackboneElement">
         <element name="initialFill" elementType="AtriusIn.MedicationRequest.DispenseRequest.InitialFill"/>
         <element name="dispenseInterval" elementType="System.Quantity" target="FHIRHelpers.ToQuantity(%value)"/>
-        <element name="validityPeriod" target="FHIRHelpers.ToInterval(%value)">
+        <element name="validityPeriod" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -3087,7 +3087,7 @@
         <element name="appliesTo" target="FHIRHelpers.ToConcept(%value)">
             <elementTypeSpecifier xsi:type="ListTypeSpecifier" elementType="System.Concept"/>
         </element>
-        <element name="age" target="FHIRHelpers.ToInterval(%value)">
+        <element name="age" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="Quantity"/>
             </elementTypeSpecifier>
@@ -3951,7 +3951,7 @@
         <element name="address" elementType="FHIR.Address"/>
         <element name="gender" elementType="FHIR.AdministrativeGender" target="%value.value"/>
         <element name="organization" elementType="FHIR.Reference"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -3992,7 +3992,7 @@
             <elementTypeSpecifier xsi:type="ListTypeSpecifier" elementType="FHIR.Identifier"/>
         </element>
         <element name="code" elementType="System.Concept" target="FHIRHelpers.ToConcept(%value)"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -4004,7 +4004,7 @@
             <elementTypeSpecifier xsi:type="ListTypeSpecifier" elementType="FHIR.Identifier"/>
         </element>
         <element name="active" elementType="FHIR.boolean"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -4047,7 +4047,7 @@
     </typeInfo>
     <typeInfo xsi:type="ClassInfo" namespace="AtriusIn" name="PractitionerRole.NotAvailable" retrievable="false" baseType="FHIR.BackboneElement">
         <element name="description" elementType="System.String" target="%value.value"/>
-        <element name="during" target="FHIRHelpers.ToInterval(%value)">
+        <element name="during" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -4290,7 +4290,7 @@
         <element name="photo">
             <elementTypeSpecifier xsi:type="ListTypeSpecifier" elementType="FHIR.Attachment"/>
         </element>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -4629,7 +4629,7 @@
         <element name="focus" elementType="FHIR.Reference"/>
         <element name="for" elementType="FHIR.Reference"/>
         <element name="encounter" elementType="FHIR.Reference"/>
-        <element name="executionPeriod" target="FHIRHelpers.ToInterval(%value)">
+        <element name="executionPeriod" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -4751,7 +4751,7 @@
     </typeInfo>
     <typeInfo xsi:type="ClassInfo" namespace="AtriusIn" name="Task.Restriction" retrievable="false" baseType="FHIR.BackboneElement">
         <element name="repetitions" elementType="System.Integer" target="%value.value"/>
-        <element name="period" target="FHIRHelpers.ToInterval(%value)">
+        <element name="period" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>
@@ -4785,7 +4785,7 @@
         <element name="focus" elementType="FHIR.Reference"/>
         <element name="for" elementType="FHIR.Reference"/>
         <element name="encounter" elementType="FHIR.Reference"/>
-        <element name="executionPeriod" target="FHIRHelpers.ToInterval(%value)">
+        <element name="executionPeriod" target="FHIRHelpers.ToSystemInterval(%value)">
             <elementTypeSpecifier xsi:type="IntervalTypeSpecifier">
                 <pointTypeSpecifier xsi:type="NamedTypeSpecifier" namespace="System" name="DateTime"/>
             </elementTypeSpecifier>

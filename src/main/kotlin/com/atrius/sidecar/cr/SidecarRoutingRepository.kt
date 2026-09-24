@@ -1,6 +1,7 @@
 package com.atrius.sidecar.cr
 
 import ca.uhn.fhir.context.FhirContext
+import org.slf4j.LoggerFactory
 import ca.uhn.fhir.model.api.IQueryParameterType
 import ca.uhn.fhir.repository.IRepository
 import ca.uhn.fhir.rest.api.MethodOutcome
@@ -17,6 +18,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.instance.model.api.IIdType
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Parameters
+import org.hl7.fhir.r4.model.ValueSet
 
 /**
  * Routes FHIR repository calls across clinical (data), KR (content), and HTS (terminology) bases.
@@ -190,7 +192,13 @@ internal class SidecarRoutingRepository(
                     name,
                 )
             return SidecarExpandCache.getOrLoad(key) {
-                repoForId(id).invoke(id, name, parametersOrEmpty(parameters), returnType, headers)
+                val loaded = repoForId(id).invoke(id, name, parametersOrEmpty(parameters), returnType, headers)
+                if (loaded is ValueSet && parametersOmitExpandCount(parameters as? Parameters)) {
+                    @Suppress("UNCHECKED_CAST")
+                    completeInstanceExpansion(id, name, loaded, headers) as R
+                } else {
+                    loaded
+                }
             }
         }
         return repoForId(id).invoke(id, name, parametersOrEmpty(parameters), returnType, headers)
@@ -212,10 +220,41 @@ internal class SidecarRoutingRepository(
                     "$name:outcome",
                 )
             return SidecarExpandCache.getOrLoad(key) {
-                repoForId(id).invoke(id, name, parametersOrEmpty(parameters), headers)
+                val outcome = repoForId(id).invoke(id, name, parametersOrEmpty(parameters), headers)
+                val vs = outcome.resource as? ValueSet
+                if (vs != null && parametersOmitExpandCount(parameters as? Parameters)) {
+                    outcome.resource = completeInstanceExpansion(id, name, vs, headers)
+                }
+                outcome
             }
         }
         return repoForId(id).invoke(id, name, parametersOrEmpty(parameters), headers)
+    }
+
+    /**
+     * Page an unbounded instance `$expand` until `expansion.contains` covers `expansion.total`.
+     * Follow-up pages go straight to the terminology repository so they are not cached as the
+     * caller's full expansion.
+     */
+    private fun <I : IIdType> completeInstanceExpansion(
+        id: I,
+        name: String,
+        first: ValueSet,
+        headers: MutableMap<String, String>?,
+    ): ValueSet {
+        val before = first.expansion?.contains?.size ?: 0
+        val total = first.expansion?.total
+        val completed =
+            completePartialExpansion(first) { offset, count ->
+                val page = terminology.invoke(id, name, expansionPageParameters(offset, count), headers)
+                page.resource as? ValueSet
+                    ?: error("ValueSet/\$expand offset=$offset did not return a ValueSet")
+            }
+        val after = completed.expansion?.contains?.size ?: 0
+        if (total != null && after != before) {
+            logger.debug("paged ValueSet/{} expand {} -> {} of {}", id.idPart, before, after, total)
+        }
+        return completed
     }
 
     override fun <B : IBaseBundle, P : IBaseParameters> history(
@@ -254,6 +293,7 @@ internal class SidecarRoutingRepository(
         }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(SidecarRoutingRepository::class.java)
         private val TERMINOLOGY_TYPES = setOf("ValueSet", "CodeSystem", "ConceptMap")
         private val CONTENT_TYPES =
             setOf(
